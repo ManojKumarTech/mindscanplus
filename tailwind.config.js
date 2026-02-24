@@ -1,0 +1,90 @@
+/** @type {import('tailwindcss').Config} */
+export default {
+  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
+  theme: {
+    extend: {
+      colors: {
+        mint: {
+          50: '#f0fdf9',
+          100: '#d1fae5',
+          200: '#a2f5d8',
+          300: '#6ee7c9',
+          400: '#3dd5b8',
+          500: '#1bc47d',
+          600: '#10b981',
+          700: '#059669',
+          800: '#047857',
+          900: '#065f46',
+        },
+        lavender: {
+          50: '#f9f5ff',
+          100: '#f3e8ff',
+          200: '#e9d5ff',
+          300: '#d8b4fe',
+          400: '#c084fc',
+          500: '#a855f7',
+          600: '#9333ea',
+          700: '#7e22ce',
+          800: '#6b21a8',
+          900: '#581c87',
+        },
+        sky: {
+          50: '#f0f9ff',
+          100: '#e0f2fe',
+          200: '#bae6fd',
+          300: '#7dd3fc',
+          400: '#38bdf8',
+          500: '#0ea5e9',
+          600: '#0284c7',
+          700: '#0369a1',
+          800: '#075985',
+          900: '#0c2d6b',
+        },
+        warmBeige: {
+          50: '#faf8f3',
+          100: '#f5f1e8',
+          200: '#ede8dc',
+          300: '#e0dace',
+          400: '#d4cabe',
+          500: '#c8b8a0',
+          600: '#b39f8a',
+          700: '#9d8a7a',
+          800: '#7d7368',
+          900: '#5f5952',
+        },
+      },
+      fontFamily: {
+        sans: ['Inter', 'system-ui', 'sans-serif'],
+      },
+      boxShadow: {
+        soft: '0 2px 8px rgba(0, 0, 0, 0.08)',
+        softLg: '0 4px 16px rgba(0, 0, 0, 0.1)',
+        softXl: '0 8px 24px rgba(0, 0, 0, 0.12)',
+      },
+      animation: {
+        fadeIn: 'fadeIn 0.4s ease-in-out',
+        slideUp: 'slideUp 0.5s ease-out',
+        pulse: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+      },
+      keyframes: {
+        fadeIn: {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+        slideUp: {
+          '0%': { opacity: '0', transform: 'translateY(12px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+      },
+      spacing: {
+        xs: '4px',
+        sm: '8px',
+        md: '16px',
+        lg: '24px',
+        xl: '32px',
+        '2xl': '48px',
+      },
+    },
+  },
+  plugins: [],
+};
