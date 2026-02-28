@@ -1,78 +1,28 @@
+import { CheckCircle, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
-import { ChevronRight, CheckCircle } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { saveScreeningResult } from '../services/screeningService';
+import { useScreeningFlow } from '../hooks/useScreeningFlow';
+import { Button } from '../components/ui/Button';
+import { Card } from '../components/ui/Card';
 
 export default function Screening() {
-  const [step, setStep] = useState(0);
-  const [responses, setResponses] = useState<Record<string, number>>({});
+  const { user } = useAuth();
+  const {
+    step,
+    currentAssessment,
+    responses,
+    handleResponse,
+    getResponseValue,
+    allAnswered,
+    next,
+    back,
+    reset,
+    calculateStressStage,
+    assessments,
+  } = useScreeningFlow();
+
   const [showResults, setShowResults] = useState(false);
-
-  const assessments = [
-    {
-      id: 'stress',
-      title: 'Stress Assessment',
-      description: 'How much stress have you been experiencing?',
-      questions: [
-        'I feel overwhelmed by my responsibilities',
-        'I have difficulty relaxing or unwinding',
-        'I experience physical tension or headaches',
-        'I struggle to focus on tasks',
-        'I feel restless or anxious',
-      ],
-    },
-    {
-      id: 'anxiety',
-      title: 'Anxiety Assessment',
-      description: 'How anxious have you been feeling?',
-      questions: [
-        'I worry excessively about things',
-        'I experience panic or fear without clear reason',
-        'I avoid situations due to anxiety',
-        'I have trouble sleeping due to worry',
-        'I experience physical anxiety symptoms',
-      ],
-    },
-    {
-      id: 'wellbeing',
-      title: 'Emotional Wellbeing Assessment',
-      description: 'How is your overall emotional wellbeing?',
-      questions: [
-        'I feel hopeful about the future',
-        'I enjoy activities that used to make me happy',
-        'I feel connected to others',
-        'I have a sense of purpose',
-        'I feel satisfied with my life',
-      ],
-    },
-  ];
-
-  const handleResponse = (assessmentIdx: number, questionIdx: number, value: number) => {
-    const key = `${assessments[assessmentIdx].id}_q${questionIdx}`;
-    setResponses({ ...responses, [key]: value });
-  };
-
-  const getResponseValue = (assessmentIdx: number, questionIdx: number) => {
-    const key = `${assessments[assessmentIdx].id}_q${questionIdx}`;
-    return responses[key] || 0;
-  };
-
-  const allAnswered = () => {
-    const currentAssessment = assessments[step];
-    for (let i = 0; i < currentAssessment.questions.length; i++) {
-      if (!getResponseValue(step, i)) return false;
-    }
-    return true;
-  };
-
-  const calculateStressStage = () => {
-    const stressResponses = Object.entries(responses)
-      .filter(([key]) => key.startsWith('stress'))
-      .map(([, value]) => value as number);
-    const avg = stressResponses.reduce((a, b) => a + b, 0) / stressResponses.length;
-
-    if (avg <= 2) return { stage: 'Low Stress', color: 'text-mint-600', bg: 'bg-mint-50' };
-    if (avg <= 3.5) return { stage: 'Moderate Stress', color: 'text-amber-600', bg: 'bg-amber-50' };
-    return { stage: 'High Stress', color: 'text-rose-600', bg: 'bg-rose-50' };
-  };
 
   return (
     <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
@@ -98,12 +48,12 @@ export default function Screening() {
 
             <div className="bg-white rounded-2xl p-8 shadow-soft mb-8 animate-slideUp">
               <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                {assessments[step].title}
+                {currentAssessment.title}
               </h2>
-              <p className="text-gray-600 mb-8">{assessments[step].description}</p>
+              <p className="text-gray-600 mb-8">{currentAssessment.description}</p>
 
               <div className="space-y-6">
-                {assessments[step].questions.map((question, qIdx) => (
+                {currentAssessment.questions.map((question, qIdx) => (
                   <div key={qIdx} className="space-y-3">
                     <p className="font-medium text-gray-900">{qIdx + 1}. {question}</p>
                     <div className="flex gap-2 justify-between">
@@ -132,7 +82,7 @@ export default function Screening() {
             <div className="flex gap-4">
               {step > 0 && (
                 <button
-                  onClick={() => setStep(step - 1)}
+                  onClick={back}
                   className="flex-1 px-6 py-3 rounded-lg bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200 transition-colors"
                 >
                   Back
@@ -140,16 +90,30 @@ export default function Screening() {
               )}
               {step < assessments.length - 1 ? (
                 <button
-                  onClick={() => setStep(step + 1)}
-                  disabled={!allAnswered()}
+                  onClick={next}
+                  disabled={!allAnswered}
                   className="flex-1 px-6 py-3 rounded-lg bg-gradient-to-r from-mint-500 to-sky-500 text-white font-semibold hover:shadow-softLg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   Next <ChevronRight className="w-4 h-4" />
                 </button>
               ) : (
                 <button
-                  onClick={() => setShowResults(true)}
-                  disabled={!allAnswered()}
+                  onClick={async () => {
+                    const { score } = calculateStressStage();
+                    let stressLevel: 'Low' | 'Moderate' | 'High' = 'Low';
+                    if (score > 3.5) stressLevel = 'High';
+                    else if (score > 2) stressLevel = 'Moderate';
+
+                    if (user) {
+                      try {
+                        await saveScreeningResult(user.uid, Math.round(score * 10) / 10, stressLevel);
+                      } catch (e) {
+                        console.error('Failed to save screening result', e);
+                      }
+                    }
+                    setShowResults(true);
+                  }}
+                  disabled={!allAnswered}
                   className="flex-1 px-6 py-3 rounded-lg bg-gradient-to-r from-mint-500 to-sky-500 text-white font-semibold hover:shadow-softLg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   See Results
@@ -180,9 +144,9 @@ export default function Screening() {
                       ? "You're experiencing some stress. Consider incorporating calming activities into your routine."
                       : "You're experiencing significant stress. Please reach out for support and take care of yourself."}
                 </p>
-                <button className="text-mint-600 font-semibold hover:text-mint-700 transition-colors">
+                <a href="/resources" className="text-mint-600 font-semibold hover:text-mint-700 transition-colors">
                   Learn more about stress management →
-                </button>
+                </a>
               </div>
 
               <div className="grid md:grid-cols-3 gap-6">
@@ -193,7 +157,7 @@ export default function Screening() {
                   const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
 
                   return (
-                    <div key={assessment.id} className="bg-white rounded-2xl p-6 shadow-soft">
+                    <Card key={assessment.id} className="p-6">
                       <h3 className="font-semibold text-gray-900 mb-4">{assessment.title}</h3>
                       <div className="mb-4">
                         <div className="h-2 rounded-full bg-gray-200 overflow-hidden">
@@ -206,7 +170,7 @@ export default function Screening() {
                       <p className="text-sm text-gray-600">
                         Score: {avg.toFixed(1)} / 5.0
                       </p>
-                    </div>
+                    </Card>
                   );
                 })}
               </div>
@@ -234,16 +198,20 @@ export default function Screening() {
               </div>
 
               <div className="flex gap-4">
-                <button
-                  onClick={() => setShowResults(false)}
-                  className="flex-1 px-6 py-3 rounded-lg bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200 transition-colors"
+                <Button
+                  onClick={() => {
+                    setShowResults(false);
+                    reset();
+                  }}
+                  className="flex-1"
+                  variant="secondary"
                 >
                   Retake Assessment
-                </button>
+                </Button>
                 <a href='/emotional-care'>
-                  <button className="flex-1 px-6 py-3 rounded-lg bg-gradient-to-r from-mint-500 to-sky-500 text-white font-semibold hover:shadow-softLg transition-all">
+                  <Button className="flex-1" variant="primary">
                     Explore Emotional Care
-                  </button>
+                  </Button>
                 </a>
               </div>
             </div>

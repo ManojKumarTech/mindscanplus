@@ -1,56 +1,25 @@
 import { Heart, MessageCircle, Shield, Users } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { CommunityStory, fetchStories, postStory } from '../services/communityService';
 
 export default function Community() {
-  const stories = [
-    {
-      id: 1,
-      excerpt: 'I thought I was the only one experiencing this level of anxiety. Reading others\' stories helped me realize I\'m not alone.',
-      author: 'Anonymous',
-      timeAgo: '2 days ago',
-      reactions: 234,
-      comments: 45,
-    },
-    {
-      id: 2,
-      excerpt: 'My mental health journey has been messy and non-linear, but this community reminded me that\'s completely normal and valid.',
-      author: 'Anonymous',
-      timeAgo: '1 week ago',
-      reactions: 567,
-      comments: 89,
-    },
-    {
-      id: 3,
-      excerpt: 'After years of struggling alone, sharing my story here was liberating. The responses were so compassionate and understanding.',
-      author: 'Anonymous',
-      timeAgo: '3 days ago',
-      reactions: 412,
-      comments: 67,
-    },
-    {
-      id: 4,
-      excerpt: 'I\'ve learned more about my own mental health from this community than anywhere else. Thank you for this safe space.',
-      author: 'Anonymous',
-      timeAgo: '1 week ago',
-      reactions: 678,
-      comments: 102,
-    },
-    {
-      id: 5,
-      excerpt: 'The shame I felt started to disappear when I realized how many people share similar struggles. We\'re all in this together.',
-      author: 'Anonymous',
-      timeAgo: '4 days ago',
-      reactions: 892,
-      comments: 156,
-    },
-    {
-      id: 6,
-      excerpt: 'I came here at my lowest point. The encouragement and practical advice I received changed my perspective on recovery.',
-      author: 'Anonymous',
-      timeAgo: '2 weeks ago',
-      reactions: 1024,
-      comments: 198,
-    },
-  ];
+  const [stories, setStories] = useState<CommunityStory[]>([]);
+  const [loadingStories, setLoadingStories] = useState(true);
+  const [showSubmit, setShowSubmit] = useState(false);
+  const [newExcerpt, setNewExcerpt] = useState('');
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const { stories: fetched } = await fetchStories(20);
+        setStories(fetched);
+      } catch (e) {
+        console.error('Failed to load stories', e);
+      } finally {
+        setLoadingStories(false);
+      }
+    })();
+  }, []);
 
   const supportResources = [
     {
@@ -119,20 +88,67 @@ export default function Community() {
         <section>
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-3xl font-bold text-gray-900">Community Stories</h2>
-            <button className="px-6 py-2 rounded-lg bg-gradient-to-r from-mint-500 to-sky-500 text-white font-semibold hover:shadow-softLg transition-all">
+            <button onClick={() => setShowSubmit(true)} className="px-6 py-2 rounded-lg bg-gradient-to-r from-mint-500 to-sky-500 text-white font-semibold hover:shadow-softLg transition-all">
               Share Your Story
             </button>
+          {showSubmit && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+              <div className="bg-white rounded-2xl p-6 max-w-md w-full">
+                <h3 className="text-xl font-bold mb-4">Share Your Story</h3>
+                <textarea
+                  className="w-full h-32 p-3 border border-gray-300 rounded-lg resize-none focus:outline-none"
+                  value={newExcerpt}
+                  onChange={e => setNewExcerpt(e.target.value)}
+                  placeholder="Write something you'd like to share..."
+                />
+                <div className="mt-4 flex justify-end gap-2">
+                  <button
+                    onClick={() => {
+                      setShowSubmit(false);
+                      setNewExcerpt('');
+                    }}
+                    className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={async () => {
+                      if (!newExcerpt.trim()) return;
+                      try {
+                        await postStory(newExcerpt.trim(), null);
+                        // reload stories
+                        const { stories: fetched } = await fetchStories(20);
+                        setStories(fetched);
+                        setShowSubmit(false);
+                        setNewExcerpt('');
+                      } catch (e) {
+                        console.error('Failed to submit story', e);
+                      }
+                    }}
+                    className="px-4 py-2 rounded-lg bg-mint-500 text-white hover:bg-mint-600"
+                  >
+                    Submit
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
           </div>
 
           <div className="grid md:grid-cols-2 gap-6">
-            {stories.map(story => (
+            {loadingStories ? (
+            <p className="text-center text-gray-500">Loading stories…</p>
+          ) : stories.length === 0 ? (
+            <p className="text-center text-gray-500">No stories yet. Be the first to share!</p>
+          ) : (
+            stories.map(story => (
               <div
                 key={story.id}
                 className="bg-white rounded-2xl p-6 shadow-soft hover:shadow-softLg transition-all duration-300 cursor-pointer group"
               >
                 <p className="text-gray-700 mb-4 line-clamp-3">"{story.excerpt}"</p>
                 <div className="flex items-center justify-between text-sm text-gray-600 mb-4 pb-4 border-b border-gray-200">
-                  <span>{story.author} • {story.timeAgo}</span>
+                  <span>{story.author || 'Anonymous'}</span>
                 </div>
                 <div className="flex gap-4">
                   <button className="flex items-center gap-2 text-gray-600 hover:text-mint-600 transition-colors group-hover:translate-x-0.5">
@@ -145,11 +161,13 @@ export default function Community() {
                   </button>
                 </div>
               </div>
-            ))}
+            ))
+          )}
           </div>
 
+          {/* pagination button could be implemented using fetchStories + cursor */}
           <div className="mt-12 text-center">
-            <button className="px-8 py-3 rounded-lg border-2 border-mint-500 text-mint-600 font-semibold hover:bg-mint-50 transition-colors">
+            <button disabled className="px-8 py-3 rounded-lg border-2 border-mint-500 text-mint-600 font-semibold opacity-50 cursor-not-allowed">
               Load More Stories
             </button>
           </div>

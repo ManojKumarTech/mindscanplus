@@ -1,5 +1,7 @@
+import { Calendar, CheckCircle2, Plus, Star, Trash2 } from 'lucide-react';
+import { saveSelfCareEntry, addGratitudeItem, addWin } from '../services/selfCareService';
 import { useState } from 'react';
-import { Plus, Star, CheckCircle2, Calendar, Trash2 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 export default function SelfCare() {
   const [gratitudeItems, setGratitudeItems] = useState<string[]>([
@@ -15,6 +17,7 @@ export default function SelfCare() {
     { id: 3, text: 'Drank 8 glasses of water', date: '2 days ago' },
   ]);
   const [newWin, setNewWin] = useState('');
+  const { user } = useAuth();
 
   const selfCarePlan = [
     {
@@ -67,16 +70,31 @@ export default function SelfCare() {
     },
   ];
 
-  const addGratitude = () => {
+  const addGratitude = async () => {
     if (gratitudeInput.trim()) {
       setGratitudeItems([...gratitudeItems, gratitudeInput]);
+      if (user) {
+        try {
+          await addGratitudeItem(user.uid, gratitudeInput.trim());
+        } catch (e) {
+          console.error('Failed to save gratitude item', e);
+        }
+      }
       setGratitudeInput('');
     }
   };
 
-  const addWin = () => {
+  const handleAddWin = async () => {
     if (newWin.trim()) {
-      setWins([{ id: Date.now(), text: newWin, date: 'Today' }, ...wins]);
+      const entry = { id: Date.now(), text: newWin, date: 'Today' };
+      setWins([entry, ...wins]);
+      if (user) {
+        try {
+          await addWin(user.uid, entry);
+        } catch (e) {
+          console.error('Failed to save win', e);
+        }
+      }
       setNewWin('');
     }
   };
@@ -153,12 +171,12 @@ export default function SelfCare() {
                 type="text"
                 value={newWin}
                 onChange={e => setNewWin(e.target.value)}
-                onKeyPress={e => e.key === 'Enter' && addWin()}
+                onKeyPress={e => e.key === 'Enter' && handleAddWin()}
                 placeholder="Add a win (any size counts!)"
                 className="flex-1 px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-mint-500"
               />
               <button
-                onClick={addWin}
+                onClick={handleAddWin}
                 className="px-4 py-2 rounded-lg bg-gradient-to-r from-mint-500 to-sky-500 text-white font-medium hover:shadow-soft transition-all"
               >
                 <Plus className="w-5 h-5" />
@@ -183,10 +201,32 @@ export default function SelfCare() {
             ></textarea>
           </div>
           <div className="flex gap-3">
-            <button className="flex-1 px-6 py-3 rounded-lg bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200 transition-colors">
+            <button
+              onClick={() => {
+                setGratitudeItems([]);
+                setJournalEntry('');
+                setWins([]);
+              }}
+              className="flex-1 px-6 py-3 rounded-lg bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200 transition-colors"
+            >
               Clear
             </button>
-            <button className="flex-1 px-6 py-3 rounded-lg bg-gradient-to-r from-mint-500 to-sky-500 text-white font-semibold hover:shadow-softLg transition-all">
+            <button
+              onClick={async () => {
+                if (!user) return;
+                try {
+                  await saveSelfCareEntry(user.uid, {
+                    gratitudeItems,
+                    wins,
+                    journalEntry,
+                  });
+                  // optionally clear the journal?
+                } catch (e) {
+                  console.error('Failed to save self-care entry', e);
+                }
+              }}
+              className="flex-1 px-6 py-3 rounded-lg bg-gradient-to-r from-mint-500 to-sky-500 text-white font-semibold hover:shadow-softLg transition-all"
+            >
               Save Entry
             </button>
           </div>
@@ -243,7 +283,10 @@ export default function SelfCare() {
                     ></div>
                   </div>
                 </div>
-                <button className="w-full px-4 py-2 rounded-lg bg-white/80 font-medium text-gray-900 hover:bg-white transition-colors">
+                <button
+                  onClick={() => alert('Progress updated! (not yet persisted)')}
+                  className="w-full px-4 py-2 rounded-lg bg-white/80 font-medium text-gray-900 hover:bg-white transition-colors"
+                >
                   Update Progress
                 </button>
               </div>

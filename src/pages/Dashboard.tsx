@@ -1,44 +1,77 @@
-import { TrendingUp, Calendar, CheckCircle, Award, Heart } from 'lucide-react';
+import { Calendar, Heart, TrendingUp } from 'lucide-react';
+import { useMemo } from 'react';
+import { ChartBar } from '../components/ui/ChartBar';
+import { StatsCard } from '../components/ui/StatsCard';
+import { useDashboardMetrics } from '../hooks/useDashboardMetrics';
 
 export default function Dashboard() {
-  const moodData = [
-    { day: 'Mon', value: 3.2 },
-    { day: 'Tue', value: 3.5 },
-    { day: 'Wed', value: 3.8 },
-    { day: 'Thu', value: 3.6 },
-    { day: 'Fri', value: 4.1 },
-    { day: 'Sat', value: 4.3 },
-    { day: 'Sun', value: 4.0 },
-  ];
+  const { metrics, loading, error } = useDashboardMetrics();
+
+  // convert last7Days into chart-compatible moodData
+  const moodData = useMemo(() => {
+    if (!metrics) return [];
+    return metrics.last7Days.map(day => ({
+      day: new Date(day.date).toLocaleDateString('en-US', { weekday: 'short' }),
+      value: day.averageScore,
+    }));
+  }, [metrics]);
 
   const maxMood = 5;
-  const currentStreak = 12;
-  const screeningHistory = [
-    {
-      date: 'Today',
-      stage: 'Moderate Stress',
-      score: 3.4,
-      trend: 'up',
-    },
-    {
-      date: '7 days ago',
-      stage: 'Moderate Stress',
-      score: 2.8,
-      trend: 'down',
-    },
-    {
-      date: '14 days ago',
-      stage: 'High Stress',
-      score: 2.1,
-      trend: 'down',
-    },
-    {
-      date: '21 days ago',
-      stage: 'High Stress',
-      score: 1.9,
-      trend: 'up',
-    },
-  ];
+
+  const weeklyAvg = useMemo(() => {
+    if (!metrics) return 0;
+    const scores = metrics.last7Days.map(d => d.averageScore);
+    if (scores.length === 0) return 0;
+    const sum = scores.reduce((a, b) => a + b, 0);
+    return Math.round((sum / scores.length) * 10) / 10;
+  }, [metrics]);
+
+  const currentStreak = useMemo(() => {
+    if (!metrics) return 0;
+    const sorted = [...metrics.last7Days].sort((a, b) =>
+      new Date(b.date).getTime() - new Date(a.date).getTime()
+    );
+    let streak = 0;
+    for (const day of sorted) {
+      if (day.results.length > 0) {
+        streak++;
+      } else {
+        break;
+      }
+    }
+    return streak;
+  }, [metrics]);
+
+  const moodTrend = useMemo(() => {
+    if (!metrics || metrics.last7Days.length < 2) return '—';
+    const first = metrics.last7Days[0].averageScore;
+    const last = metrics.last7Days[metrics.last7Days.length - 1].averageScore;
+    return last >= first ? 'Improving' : 'Declining';
+  }, [metrics]);
+
+  const screeningHistory = useMemo(() => {
+    if (!metrics) return [];
+    const ordered = [...metrics.last7Days].reverse();
+    return ordered.map((day, idx) => {
+      const prev = ordered[idx + 1];
+      const trend = day.averageScore
+        ? day.averageScore >= (prev?.averageScore || 0)
+          ? 'up'
+          : 'down'
+        : 'up';
+      return {
+        date: day.date,
+        stage:
+          day.averageScore <= 2
+            ? 'High Stress'
+            : day.averageScore <= 3
+            ? 'Moderate Stress'
+            : 'Low Stress',
+        score: day.averageScore,
+        trend,
+      };
+    });
+  }, [metrics]);
 
   const achievements = [
     { icon: '📚', title: '7-Day Screener', description: 'Took screening 7 days in a row' },
@@ -55,52 +88,49 @@ export default function Dashboard() {
           <p className="text-gray-600">Track your progress and celebrate how far you've come.</p>
         </div>
 
+        {loading && (
+          <p className="text-center text-gray-500 mb-4">Loading dashboard data…</p>
+        )}
+        {error && (
+          <p className="text-center text-red-500 mb-4">Error: {error}</p>
+        )}
         <div className="grid md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white rounded-2xl p-6 shadow-soft">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-gray-700">Weekly Average Mood</h3>
-              <Heart className="w-5 h-5 text-pink-500" />
-            </div>
-            <p className="text-4xl font-bold text-gray-900 mb-2">4.07</p>
-            <p className="text-sm text-gray-600">↑ 12% from last week</p>
-          </div>
+          <StatsCard
+            title="Weekly Average Mood"
+            icon={<Heart className="w-5 h-5 text-pink-500" />}
+            value={weeklyAvg}
+            subtitle={!loading && 'based on last 7 days'}
+            loading={loading}
+          />
 
-          <div className="bg-white rounded-2xl p-6 shadow-soft">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-gray-700">Current Streak</h3>
-              <TrendingUp className="w-5 h-5 text-mint-600" />
-            </div>
-            <p className="text-4xl font-bold text-gray-900 mb-2">{currentStreak}</p>
-            <p className="text-sm text-gray-600">Check-in days in a row</p>
-          </div>
+          <StatsCard
+            title="Current Streak"
+            icon={<TrendingUp className="w-5 h-5 text-mint-600" />}
+            value={currentStreak}
+            subtitle="Check-in days in a row"
+            loading={loading}
+          />
 
-          <div className="bg-white rounded-2xl p-6 shadow-soft">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-gray-700">Mood Trend</h3>
-              <Calendar className="w-5 h-5 text-sky-600" />
-            </div>
-            <p className="text-4xl font-bold text-gray-900 mb-2">Improving</p>
-            <p className="text-sm text-gray-600">You're doing better this week</p>
-          </div>
+          <StatsCard
+            title="Mood Trend"
+            icon={<Calendar className="w-5 h-5 text-sky-600" />}
+            value={moodTrend}
+            subtitle={!loading && (moodTrend === 'Improving' ? "You're doing better this week" : "Your mood is declining")}
+            loading={loading}
+          />
         </div>
 
         <section className="bg-white rounded-2xl p-8 shadow-soft mb-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">Mood Trend (Last 7 Days)</h2>
           <div className="flex items-end justify-between gap-2 h-40">
-            {moodData.map((data, idx) => {
-              const height = (data.value / maxMood) * 100;
-              return (
-                <div key={idx} className="flex-1 flex flex-col items-center gap-2">
-                  <div className="w-full flex flex-col items-center">
-                    <div
-                      className="w-full rounded-t-lg bg-gradient-to-t from-mint-500 to-sky-500 transition-all duration-300 hover:shadow-soft"
-                      style={{ height: `${height}px` }}
-                    ></div>
-                  </div>
-                  <p className="text-xs text-gray-600 font-medium">{data.day}</p>
-                </div>
-              );
-            })}
+            {moodData.length === 0 ? (
+              <p className="mx-auto text-gray-500">No mood data available yet.</p>
+            ) : (
+              moodData.map((data, idx) => {
+                const height = (data.value / maxMood) * 100;
+                return <ChartBar key={idx} height={height} label={data.day} />;
+              })
+            )}
           </div>
           <p className="text-sm text-gray-600 mt-4">
             Your mood is trending upward. Keep up the self-care activities—they're working!
@@ -111,22 +141,29 @@ export default function Dashboard() {
           <section className="bg-white rounded-2xl p-8 shadow-soft">
             <h2 className="text-2xl font-bold text-gray-900 mb-6">Screening History</h2>
             <div className="space-y-4">
-              {screeningHistory.map((item, idx) => (
-                <div key={idx} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                  <div>
-                    <p className="font-semibold text-gray-900">{item.stage}</p>
-                    <p className="text-sm text-gray-600">{item.date}</p>
+              {screeningHistory.length === 0 ? (
+                <p className="text-center text-gray-500">No screening history available.</p>
+              ) : (
+                screeningHistory.map((item, idx) => (
+                  <div key={idx} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                    <div>
+                      <p className="font-semibold text-gray-900">{item.stage}</p>
+                      <p className="text-sm text-gray-600">{item.date}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-bold text-gray-900">{item.score}</p>
+                      <p className={`text-xs font-medium ${item.trend === 'up' ? 'text-green-600' : 'text-red-600'}`}>
+                        {item.trend === 'up' ? '↑' : '↓'} Trend
+                      </p>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <p className="font-bold text-gray-900">{item.score}</p>
-                    <p className={`text-xs font-medium ${item.trend === 'up' ? 'text-green-600' : 'text-red-600'}`}>
-                      {item.trend === 'up' ? '↑' : '↓'} Trend
-                    </p>
-                  </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
-            <button className="mt-6 w-full px-6 py-3 rounded-lg bg-gradient-to-r from-mint-500 to-sky-500 text-white font-semibold hover:shadow-softLg transition-all">
+            <button
+              onClick={() => (window.location.href = '/screening')}
+              className="mt-6 w-full px-6 py-3 rounded-lg bg-gradient-to-r from-mint-500 to-sky-500 text-white font-semibold hover:shadow-softLg transition-all"
+            >
               Take New Screening
             </button>
           </section>
@@ -176,19 +213,29 @@ export default function Dashboard() {
         <section className="bg-gradient-to-r from-mint-100 to-sky-100 rounded-2xl p-8 border border-mint-200">
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Your Wellness Summary</h2>
           <div className="space-y-3 mb-6">
-            <p className="text-gray-800">
-              You're showing consistent progress in your mental wellbeing journey. Your mood has improved by 12% this week, and you've maintained a
-              12-day check-in streak—that's amazing dedication to your health.
-            </p>
-            <p className="text-gray-800">
-              The activities you're completing are having a real impact. Keep using the reset techniques, journaling regularly, and leaning on your
-              gratitude practice. These habits are building resilience.
-            </p>
-            <p className="text-gray-800 font-semibold">
-              Remember: Progress isn't always linear, and that's completely okay. What matters is that you're showing up for yourself. Keep going.
-            </p>
+            {metrics ? (
+              <>
+                <p className="text-gray-800">
+                  You're showing consistent progress in your mental wellbeing journey. Your mood this month averages{' '}
+                  <strong>{metrics.currentMonth.averageScore}</strong>, and you've taken{' '}
+                  <strong>{metrics.totalResults}</strong> screenings overall.
+                </p>
+                <p className="text-gray-800">
+                  The activities you're completing are having a real impact. Keep using the reset techniques, journaling regularly, and leaning on your
+                  gratitude practice. These habits are building resilience.
+                </p>
+                <p className="text-gray-800 font-semibold">
+                  Remember: Progress isn't always linear, and that's completely okay. What matters is that you're showing up for yourself. Keep going.
+                </p>
+              </>
+            ) : (
+              <p className="text-gray-800">Loading your personalized summary...</p>
+            )}
           </div>
-          <button className="px-6 py-3 rounded-lg bg-white text-mint-600 font-semibold hover:bg-gray-50 transition-colors">
+          <button
+            onClick={() => (window.location.href = '/resources')}
+            className="px-6 py-3 rounded-lg bg-white text-mint-600 font-semibold hover:bg-gray-50 transition-colors"
+          >
             Explore More Resources
           </button>
         </section>

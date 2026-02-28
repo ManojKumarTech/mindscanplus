@@ -1,12 +1,18 @@
+import { Activity, AlertCircle, Brain, Heart, Shield, Smile, TrendingUp } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { Zap, Shield, TrendingUp, Heart, Brain, Smile, AlertCircle, Activity } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 export default function Home() {
+  const { userProfile } = useAuth();
+
   return (
     <div className="min-h-screen">
       <section className="relative overflow-hidden pt-20 pb-32 px-4 sm:px-6 lg:px-8">
         <div className="absolute inset-0 bg-gradient-to-b from-mint-50 via-sky-50 to-transparent"></div>
         <div className="relative max-w-7xl mx-auto text-center">
+          {userProfile?.name && (
+            <p className="text-lg text-mint-600 font-semibold mb-4 animate-slideUp">Welcome back, {userProfile.name}! 👋</p>
+          )}
           <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6 animate-slideUp">
             Your mental wellbeing <span className="bg-gradient-to-r from-mint-600 to-sky-600 bg-clip-text text-transparent">matters.</span>
           </h1>
@@ -25,6 +31,12 @@ export default function Home() {
               className="px-8 py-3 rounded-lg bg-sky-100 text-sky-700 font-semibold hover:bg-sky-200 transition-all duration-200"
             >
               Start Emotional Check-In
+            </Link>
+            <Link
+              to="/login"
+              className="px-8 py-3 rounded-lg bg-mint-100 text-mint-700 font-semibold hover:bg-mint-200 transition-all duration-200"
+            >
+              Sign In / Sign Up
             </Link>
           </div>
         </div>

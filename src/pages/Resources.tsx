@@ -127,9 +127,9 @@ export default function Resources() {
                   <h3 className="font-bold text-gray-900 mb-2">{resource.name}</h3>
                   <p className="text-lg font-semibold text-rose-600 mb-2">{resource.phone}</p>
                   <p className="text-gray-600 text-sm">{resource.description}</p>
-                  <button className="mt-4 w-full px-4 py-2 rounded-lg bg-rose-50 text-rose-600 font-medium hover:bg-rose-100 transition-colors">
-                    Get Help
-                  </button>
+                  <a href={`tel:${resource.phone.replace(/[^0-9+]/g, '')}`} className="mt-4 w-full block text-center px-4 py-2 rounded-lg bg-rose-50 text-rose-600 font-medium hover:bg-rose-100 transition-colors">
+                    Call
+                  </a>
                 </div>
               );
             })}
@@ -145,9 +145,14 @@ export default function Resources() {
                 If you're thinking about harming yourself or others, please reach out for immediate help. You deserve support, and there are people
                 ready to listen.
               </p>
-              <button className="px-6 py-3 rounded-lg bg-sky-600 text-white font-semibold hover:bg-sky-700 transition-colors">
+              <a
+                href="https://www.findahelpline.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-6 py-3 rounded-lg bg-sky-600 text-white font-semibold hover:bg-sky-700 transition-colors"
+              >
                 Find Crisis Services Near You
-              </button>
+              </a>
             </div>
           </div>
         </section>
@@ -170,9 +175,9 @@ export default function Resources() {
                   {article.title}
                 </h3>
                 <p className="text-gray-600 text-sm mb-4">{article.excerpt}</p>
-                <button className="text-mint-600 font-semibold text-sm hover:text-mint-700 transition-colors">
+                <a href="#" className="text-mint-600 font-semibold text-sm hover:text-mint-700 transition-colors">
                   Read Article →
-                </button>
+                </a>
               </article>
             ))}
           </div>
@@ -185,9 +190,10 @@ export default function Resources() {
           </p>
           <div className="grid md:grid-cols-3 gap-6">
             {audioGuides.map((guide, idx) => (
-              <button
+              <a
                 key={idx}
-                className="bg-white rounded-2xl p-6 shadow-soft hover:shadow-softLg transition-all text-left group"
+                href="#"
+                className="bg-white rounded-2xl p-6 shadow-soft hover:shadow-softLg transition-all text-left group block"
               >
                 <div className="text-5xl mb-4 group-hover:scale-110 transition-transform">{guide.icon}</div>
                 <h3 className="font-bold text-gray-900 mb-2">{guide.title}</h3>
@@ -201,7 +207,7 @@ export default function Resources() {
                   <Music className="w-4 h-4" />
                   Listen Now
                 </div>
-              </button>
+              </a>
             ))}
           </div>
         </section>

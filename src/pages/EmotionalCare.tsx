@@ -135,6 +135,7 @@ export default function EmotionalCare() {
                   {['Try an activity', 'Start journaling', 'Talk to someone'].map((action, idx) => (
                     <button
                       key={idx}
+                      onClick={() => alert(action)}
                       className="px-4 py-2 rounded-lg bg-sky-100 text-sky-700 font-medium hover:bg-sky-200 transition-colors"
                     >
                       {action}
@@ -202,7 +203,10 @@ export default function EmotionalCare() {
                       ))}
                     </div>
 
-                    <button className="w-full px-6 py-3 rounded-lg bg-gradient-to-r from-mint-500 to-sky-500 text-white font-semibold hover:shadow-softLg transition-all">
+                    <button
+                      onClick={() => alert('Starting activity...')}
+                      className="w-full px-6 py-3 rounded-lg bg-gradient-to-r from-mint-500 to-sky-500 text-white font-semibold hover:shadow-softLg transition-all"
+                    >
                       Start Activity
                     </button>
                   </div>
