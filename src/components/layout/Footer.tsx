@@ -74,9 +74,11 @@ export default function Footer() {
             <p className="text-sm text-gray-600 mb-2">
               If you're in immediate danger, please reach out for help.
             </p>
-            <Button variant="ghost" className="text-sm">
-              Crisis Resources →
-            </Button>
+            <Link to="/resources">
+              <Button variant="ghost" className="text-sm">
+                Crisis Resources →
+              </Button>
+            </Link>
           </div>
         </div>
 
@@ -85,8 +87,7 @@ export default function Footer() {
             Remember: You matter. Your feelings matter. And you're not alone in this journey.
           </p>
           <p className="text-center text-gray-500 text-xs mt-4">
-            © 2024 MindScan+. This is a UI-only platform. For crisis support, please contact a mental
-            health professional.
+            © 2025 MindScan+. For crisis support, please contact a mental health professional or use the Resources page.
           </p>
         </div>
       </div>

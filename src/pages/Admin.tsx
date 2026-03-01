@@ -1,6 +1,6 @@
 import { collection, getDocs } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
-import { db } from '../backend/firebase.ts';
+import { db } from '../backend/firebase';
 import { useAuth } from '../context/AuthContext';
 import {
   DashboardMetrics,

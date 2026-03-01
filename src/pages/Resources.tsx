@@ -1,24 +1,34 @@
 import { Phone, Globe, BookOpen, Music, Users, Heart, AlertTriangle } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 export default function Resources() {
   const emergencyResources = [
     {
       name: 'National Crisis Hotline',
-      phone: '988 (Call or Text)',
+      phone: '988',
+      phoneDisplay: '988 (Call or Text)',
       description: 'Available 24/7 for immediate support during emotional distress',
       icon: Phone,
+      link: 'tel:988',
+      linkLabel: 'Call or Text 988',
     },
     {
       name: 'Crisis Text Line',
-      phone: 'Text HOME to 741741',
+      phone: '741741',
+      phoneDisplay: 'Text HOME to 741741',
       description: 'Text-based crisis support whenever you need it',
       icon: Phone,
+      link: 'https://www.crisistextline.org',
+      linkLabel: 'Open Crisis Text Line',
     },
     {
       name: 'International Helpline',
-      phone: 'findahelpline.com',
+      phone: '',
+      phoneDisplay: 'findahelpline.com',
       description: 'Find mental health support resources worldwide',
       icon: Globe,
+      link: 'https://findahelpline.com',
+      linkLabel: 'Find a Helpline',
     },
   ];
 
@@ -125,10 +135,15 @@ export default function Resources() {
                 >
                   <Icon className="w-8 h-8 text-rose-600 mb-4" />
                   <h3 className="font-bold text-gray-900 mb-2">{resource.name}</h3>
-                  <p className="text-lg font-semibold text-rose-600 mb-2">{resource.phone}</p>
+                  <p className="text-lg font-semibold text-rose-600 mb-2">{resource.phoneDisplay}</p>
                   <p className="text-gray-600 text-sm">{resource.description}</p>
-                  <a href={`tel:${resource.phone.replace(/[^0-9+]/g, '')}`} className="mt-4 w-full block text-center px-4 py-2 rounded-lg bg-rose-50 text-rose-600 font-medium hover:bg-rose-100 transition-colors">
-                    Call
+                  <a
+                    href={resource.link}
+                    target={resource.link.startsWith('http') ? '_blank' : undefined}
+                    rel={resource.link.startsWith('http') ? 'noopener noreferrer' : undefined}
+                    className="mt-4 w-full block text-center px-4 py-2 rounded-lg bg-rose-50 text-rose-600 font-medium hover:bg-rose-100 transition-colors"
+                  >
+                    {resource.linkLabel}
                   </a>
                 </div>
               );
@@ -175,7 +190,12 @@ export default function Resources() {
                   {article.title}
                 </h3>
                 <p className="text-gray-600 text-sm mb-4">{article.excerpt}</p>
-                <a href="#" className="text-mint-600 font-semibold text-sm hover:text-mint-700 transition-colors">
+                <a
+                  href="https://www.nimh.nih.gov/health/topics"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-mint-600 font-semibold text-sm hover:text-mint-700 transition-colors"
+                >
                   Read Article →
                 </a>
               </article>
@@ -192,7 +212,9 @@ export default function Resources() {
             {audioGuides.map((guide, idx) => (
               <a
                 key={idx}
-                href="#"
+                href="https://www.youtube.com/results?search_query=guided+meditation"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="bg-white rounded-2xl p-6 shadow-soft hover:shadow-softLg transition-all text-left group block"
               >
                 <div className="text-5xl mb-4 group-hover:scale-110 transition-transform">{guide.icon}</div>
@@ -242,9 +264,14 @@ export default function Resources() {
                     <p className="text-sm text-gray-700">✓ Flexible scheduling</p>
                     <p className="text-sm text-gray-700">✓ Insurance accepted</p>
                   </div>
-                  <button className="w-full px-6 py-3 rounded-lg bg-gray-100 text-gray-900 font-semibold hover:bg-gray-200 transition-colors">
+                  <a
+                    href="https://www.psychologytoday.com/us/therapists"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full block text-center px-6 py-3 rounded-lg bg-gray-100 text-gray-900 font-semibold hover:bg-gray-200 transition-colors"
+                  >
                     Find a Professional
-                  </button>
+                  </a>
                 </div>
               );
             })}
@@ -260,9 +287,12 @@ export default function Resources() {
           <p className="text-gray-800 font-semibold mb-6">
             If you're ready to take the next step, reach out to a professional today.
           </p>
-          <button className="px-8 py-3 rounded-lg bg-white text-mint-600 font-semibold hover:bg-gray-100 transition-colors">
+          <Link
+            to="/dashboard"
+            className="inline-block px-8 py-3 rounded-lg bg-white text-mint-600 font-semibold hover:bg-gray-100 transition-colors"
+          >
             Get Started Today
-          </button>
+          </Link>
         </section>
       </div>
     </div>

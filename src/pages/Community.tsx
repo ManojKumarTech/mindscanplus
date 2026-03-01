@@ -1,24 +1,41 @@
 import { Heart, MessageCircle, Shield, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import type { DocumentData, QueryDocumentSnapshot } from 'firebase/firestore';
 import { CommunityStory, fetchStories, postStory } from '../services/communityService';
+import { useToast } from '../context/ToastContext';
+import { useAuth } from '../context/AuthContext';
+
+const PAGE_SIZE = 10;
 
 export default function Community() {
   const [stories, setStories] = useState<CommunityStory[]>([]);
   const [loadingStories, setLoadingStories] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [nextCursor, setNextCursor] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
   const [showSubmit, setShowSubmit] = useState(false);
   const [newExcerpt, setNewExcerpt] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const { showToast } = useToast();
+  const { user, userProfile } = useAuth();
 
   useEffect(() => {
+    let cancelled = false;
     (async () => {
+      setLoadingStories(true);
       try {
-        const { stories: fetched } = await fetchStories(20);
-        setStories(fetched);
+        const { stories: fetched, nextCursor: cursor } = await fetchStories(PAGE_SIZE);
+        if (!cancelled) {
+          setStories(fetched);
+          setNextCursor(cursor);
+        }
       } catch (e) {
         console.error('Failed to load stories', e);
+        if (!cancelled) showToast('Failed to load stories.', 'error');
       } finally {
-        setLoadingStories(false);
+        if (!cancelled) setLoadingStories(false);
       }
     })();
+    return () => { cancelled = true; };
   }, []);
 
   const supportResources = [
@@ -85,49 +102,60 @@ export default function Community() {
           </div>
         </section>
 
-        <section>
+        <section id="community-stories">
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-3xl font-bold text-gray-900">Community Stories</h2>
             <button onClick={() => setShowSubmit(true)} className="px-6 py-2 rounded-lg bg-gradient-to-r from-mint-500 to-sky-500 text-white font-semibold hover:shadow-softLg transition-all">
               Share Your Story
             </button>
           {showSubmit && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-              <div className="bg-white rounded-2xl p-6 max-w-md w-full">
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+              role="dialog"
+              aria-modal="true"
+              onClick={(e) => e.target === e.currentTarget && (setShowSubmit(false), setNewExcerpt(''))}
+            >
+              <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-softLg" onClick={e => e.stopPropagation()}>
                 <h3 className="text-xl font-bold mb-4">Share Your Story</h3>
+                <p className="text-sm text-gray-600 mb-2">Posts are shown as Anonymous to protect privacy.</p>
                 <textarea
-                  className="w-full h-32 p-3 border border-gray-300 rounded-lg resize-none focus:outline-none"
+                  className="w-full h-32 p-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-mint-500"
                   value={newExcerpt}
                   onChange={e => setNewExcerpt(e.target.value)}
                   placeholder="Write something you'd like to share..."
                 />
                 <div className="mt-4 flex justify-end gap-2">
                   <button
-                    onClick={() => {
-                      setShowSubmit(false);
-                      setNewExcerpt('');
-                    }}
+                    type="button"
+                    onClick={() => { setShowSubmit(false); setNewExcerpt(''); }}
                     className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200"
                   >
                     Cancel
                   </button>
                   <button
+                    type="button"
+                    disabled={submitting || !newExcerpt.trim()}
                     onClick={async () => {
                       if (!newExcerpt.trim()) return;
+                      setSubmitting(true);
                       try {
-                        await postStory(newExcerpt.trim(), null);
-                        // reload stories
-                        const { stories: fetched } = await fetchStories(20);
+                        await postStory(newExcerpt.trim(), user ? (userProfile?.name ?? null) : null);
+                        const { stories: fetched, nextCursor: cursor } = await fetchStories(PAGE_SIZE);
                         setStories(fetched);
+                        setNextCursor(cursor);
                         setShowSubmit(false);
                         setNewExcerpt('');
+                        showToast('Your story was shared. Thank you.');
                       } catch (e) {
                         console.error('Failed to submit story', e);
+                        showToast('Failed to share. Try again.', 'error');
+                      } finally {
+                        setSubmitting(false);
                       }
                     }}
-                    className="px-4 py-2 rounded-lg bg-mint-500 text-white hover:bg-mint-600"
+                    className="px-4 py-2 rounded-lg bg-mint-500 text-white hover:bg-mint-600 disabled:opacity-60"
                   >
-                    Submit
+                    {submitting ? 'Sharing…' : 'Submit'}
                   </button>
                 </div>
               </div>
@@ -148,7 +176,7 @@ export default function Community() {
               >
                 <p className="text-gray-700 mb-4 line-clamp-3">"{story.excerpt}"</p>
                 <div className="flex items-center justify-between text-sm text-gray-600 mb-4 pb-4 border-b border-gray-200">
-                  <span>{story.author || 'Anonymous'}</span>
+                  <span>Anonymous</span>
                 </div>
                 <div className="flex gap-4">
                   <button className="flex items-center gap-2 text-gray-600 hover:text-mint-600 transition-colors group-hover:translate-x-0.5">
@@ -165,10 +193,26 @@ export default function Community() {
           )}
           </div>
 
-          {/* pagination button could be implemented using fetchStories + cursor */}
           <div className="mt-12 text-center">
-            <button disabled className="px-8 py-3 rounded-lg border-2 border-mint-500 text-mint-600 font-semibold opacity-50 cursor-not-allowed">
-              Load More Stories
+            <button
+              type="button"
+              disabled={loadingMore || !nextCursor}
+              onClick={async () => {
+                if (!nextCursor) return;
+                setLoadingMore(true);
+                try {
+                  const { stories: more, nextCursor: cursor } = await fetchStories(PAGE_SIZE, nextCursor);
+                  setStories(prev => [...prev, ...more]);
+                  setNextCursor(cursor);
+                } catch (e) {
+                  showToast('Failed to load more.', 'error');
+                } finally {
+                  setLoadingMore(false);
+                }
+              }}
+              className="px-8 py-3 rounded-lg border-2 border-mint-500 text-mint-600 font-semibold hover:bg-mint-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loadingMore ? 'Loading…' : 'Load More Stories'}
             </button>
           </div>
         </section>
@@ -216,10 +260,21 @@ export default function Community() {
             Start by reading stories from others. When you're ready, share your own. There's no judgment here—only support and understanding.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button className="px-6 py-3 rounded-lg bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200 transition-colors">
+            <button
+              className="px-6 py-3 rounded-lg bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200 transition-colors"
+              onClick={() => {
+                const el = document.getElementById('community-stories');
+                if (el) {
+                  el.scrollIntoView({ behavior: 'smooth' });
+                }
+              }}
+            >
               Explore Stories
             </button>
-            <button className="px-6 py-3 rounded-lg bg-gradient-to-r from-mint-500 to-sky-500 text-white font-semibold hover:shadow-softLg transition-all">
+            <button
+              className="px-6 py-3 rounded-lg bg-gradient-to-r from-mint-500 to-sky-500 text-white font-semibold hover:shadow-softLg transition-all"
+              onClick={() => setShowSubmit(true)}
+            >
               Share Your Story
             </button>
           </div>

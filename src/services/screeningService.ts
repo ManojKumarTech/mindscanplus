@@ -5,7 +5,7 @@ import {
     QueryDocumentSnapshot,
     serverTimestamp,
 } from 'firebase/firestore';
-import { db } from '../backend/firebase.ts';
+import { db } from '../backend/firebase';
 import { formatDate, formatMonth } from '../utils/dateUtils';
 
 export interface ScreeningResult {

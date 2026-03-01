@@ -1,13 +1,14 @@
 import { Heart, Menu, X } from 'lucide-react';
 import { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../ui/Button';
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
-  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
 
   const navItems = user
     ? [
@@ -63,8 +64,21 @@ export default function Navbar() {
           <div className="hidden md:flex gap-1">{navItems.map(renderLink)}</div>
 
           {user && (
-            <div className="hidden md:flex items-center gap-4">
-              <Button variant="primary">Get Help</Button>
+            <div className="hidden md:flex items-center gap-2">
+              <Link to="/resources" onClick={() => setIsOpen(false)}>
+                <Button variant="secondary" className="text-sm">Get Help</Button>
+              </Link>
+              <Button
+                variant="ghost"
+                className="text-sm text-gray-600 hover:text-gray-900"
+                onClick={async () => {
+                  await logout();
+                  navigate('/login');
+                  setIsOpen(false);
+                }}
+              >
+                Logout
+              </Button>
             </div>
           )}
 
@@ -84,7 +98,24 @@ export default function Navbar() {
           <div className="md:hidden pb-4 animate-slideUp">
             <div className="flex flex-col gap-2">
               {navItems.map(renderLink)}
-              {user && <Button variant="primary" className="mt-2 w-full">Get Help</Button>}
+              {user && (
+                <>
+                  <Link to="/resources" onClick={() => setIsOpen(false)}>
+                    <Button variant="secondary" className="mt-2 w-full">Get Help</Button>
+                  </Link>
+                  <Button
+                    variant="ghost"
+                    className="w-full"
+                    onClick={async () => {
+                      await logout();
+                      navigate('/login');
+                      setIsOpen(false);
+                    }}
+                  >
+                    Logout
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         )}

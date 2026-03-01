@@ -6,7 +6,7 @@ import {
     signOut
 } from 'firebase/auth';
 import { auth } from '../backend/firebase';
-import { ensureUserProfile } from './userService.ts';
+import { ensureUserProfile } from './userService';
 
 /**
  * Register new user via email/password

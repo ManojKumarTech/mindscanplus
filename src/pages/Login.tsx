@@ -1,8 +1,10 @@
 import { Eye, EyeOff, Lock, Mail, User } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
+import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import * as authService from '../services/authService';
 import { ensureUserProfile, updateUserName } from '../services/userService';
 
@@ -20,6 +22,12 @@ export default function Login() {
     const [googleUserData, setGoogleUserData] = useState<any>(null);
 
     const navigate = useNavigate();
+    const { user } = useAuth();
+    const { showToast } = useToast();
+
+    useEffect(() => {
+        if (user) navigate('/', { replace: true });
+    }, [user, navigate]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -46,6 +54,7 @@ export default function Login() {
             } else {
                 await authService.loginWithEmail(email, password);
             }
+            showToast(isSignup ? 'Account created. Welcome!' : 'Signed in successfully.');
             navigate('/');
         } catch (err: any) {
             console.error(err);
@@ -64,6 +73,7 @@ export default function Login() {
                     setGoogleNameInput('');
                     setShowGoogleNameModal(true);
                 } else {
+                    showToast('Signed in with Google.');
                     navigate('/');
                 }
             }
@@ -86,6 +96,7 @@ export default function Login() {
             setShowGoogleNameModal(false);
             setGoogleUserData(null);
             setGoogleNameInput('');
+            showToast('Profile updated. Welcome!');
             navigate('/');
         } catch (err: any) {
             console.error(err);

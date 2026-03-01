@@ -33,10 +33,10 @@ export default function Home() {
               Start Emotional Check-In
             </Link>
             <Link
-              to="/login"
+              to="/dashboard"
               className="px-8 py-3 rounded-lg bg-mint-100 text-mint-700 font-semibold hover:bg-mint-200 transition-all duration-200"
             >
-              Sign In / Sign Up
+              View Dashboard
             </Link>
           </div>
         </div>

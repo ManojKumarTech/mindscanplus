@@ -1,6 +1,8 @@
 import { CheckCircle, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import { saveScreeningResult } from '../services/screeningService';
 import { useScreeningFlow } from '../hooks/useScreeningFlow';
 import { Button } from '../components/ui/Button';
@@ -8,6 +10,7 @@ import { Card } from '../components/ui/Card';
 
 export default function Screening() {
   const { user } = useAuth();
+  const { showToast } = useToast();
   const {
     step,
     currentAssessment,
@@ -107,8 +110,10 @@ export default function Screening() {
                     if (user) {
                       try {
                         await saveScreeningResult(user.uid, Math.round(score * 10) / 10, stressLevel);
+                        showToast('Screening result saved. You can view trends on your Dashboard.', 'success');
                       } catch (e) {
                         console.error('Failed to save screening result', e);
+                        showToast('Failed to save result. Please try again.', 'error');
                       }
                     }
                     setShowResults(true);
@@ -144,9 +149,9 @@ export default function Screening() {
                       ? "You're experiencing some stress. Consider incorporating calming activities into your routine."
                       : "You're experiencing significant stress. Please reach out for support and take care of yourself."}
                 </p>
-                <a href="/resources" className="text-mint-600 font-semibold hover:text-mint-700 transition-colors">
+                <Link to="/resources" className="text-mint-600 font-semibold hover:text-mint-700 transition-colors">
                   Learn more about stress management →
-                </a>
+                </Link>
               </div>
 
               <div className="grid md:grid-cols-3 gap-6">
@@ -197,22 +202,27 @@ export default function Screening() {
                 </ul>
               </div>
 
-              <div className="flex gap-4">
+              <div className="flex flex-wrap gap-4">
                 <Button
                   onClick={() => {
                     setShowResults(false);
                     reset();
                   }}
-                  className="flex-1"
+                  className="flex-1 min-w-[140px]"
                   variant="secondary"
                 >
                   Retake Assessment
                 </Button>
-                <a href='/emotional-care'>
-                  <Button className="flex-1" variant="primary">
+                <Link to="/emotional-care" className="flex-1 min-w-[140px]">
+                  <Button className="w-full" variant="primary">
                     Explore Emotional Care
                   </Button>
-                </a>
+                </Link>
+                <Link to="/dashboard" className="flex-1 min-w-[140px]">
+                  <Button className="w-full" variant="secondary">
+                    View Dashboard
+                  </Button>
+                </Link>
               </div>
             </div>
           </>

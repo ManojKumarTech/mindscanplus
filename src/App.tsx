@@ -3,6 +3,7 @@ import Footer from './components/layout/Footer';
 import Navbar from './components/layout/Navbar';
 import RequireAuth from './components/RequireAuth';
 import { AuthProvider } from './context/AuthContext';
+import { ToastProvider } from './context/ToastContext';
 import Admin from './pages/Admin';
 import Community from './pages/Community';
 import Dashboard from './pages/Dashboard';
@@ -16,6 +17,7 @@ import SelfCare from './pages/SelfCare';
 function App() {
   return (
     <AuthProvider>
+      <ToastProvider>
       <BrowserRouter>
         <div className="min-h-screen flex flex-col bg-gradient-to-br from-sky-50 via-mint-50 to-warmBeige-50">
         <Navbar />
@@ -40,6 +42,7 @@ function App() {
         <Footer />
       </div>
     </BrowserRouter>
+      </ToastProvider>
     </AuthProvider>
   );
 }
