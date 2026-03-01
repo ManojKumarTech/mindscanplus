@@ -1,7 +1,9 @@
 import {
     addDoc,
     collection,
-    serverTimestamp
+    getDocs,
+    QueryDocumentSnapshot,
+    serverTimestamp,
 } from 'firebase/firestore';
 import { db } from '../backend/firebase.ts';
 import { formatDate, formatMonth } from '../utils/dateUtils';
@@ -44,6 +46,12 @@ export async function saveScreeningResult(
  * Fetch all screening results for a specific user
  * Fetches from /users/{userId}/screeningResults collection
  */
+export async function fetchUserScreeningResults(userId: string): Promise<ScreeningResult[]> {
+    const q = await getDocs(collection(db, 'users', userId, 'screeningResults'));
+    const arr: ScreeningResult[] = q.docs.map((d: QueryDocumentSnapshot) => ({ id: d.id, ...d.data() as any })) as any;
+    return arr;
+}
+
 
 
 /**
