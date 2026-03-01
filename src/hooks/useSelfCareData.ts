@@ -1,28 +1,25 @@
 import { Timestamp } from 'firebase/firestore';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import type {
-    ChallengeItem,
-    GratitudeItem,
-    SelfCareEntry,
-    WinEntry,
+  GratitudeItem,
+  SelfCareEntry,
+  WinEntry,
 } from '../services/selfCareService';
 import {
-    addGratitudeItem,
-    addWin,
-    createChallenge,
-    deleteGratitudeItem,
-    deleteWinById,
-    togglePlanItem as serviceTogglePlanItem,
-    updateChallengeProgress,
-    upsertJournalEntry,
-    watchChallenges,
-    watchGratitudeItems,
-    watchJournalEntries,
-    watchPlanProgress,
-    watchWins
+  addGratitudeItem,
+  addWin,
+  deleteGratitudeItem,
+  deleteWinById,
+  togglePlanItem as serviceTogglePlanItem,
+  upsertJournalEntry,
+  watchGratitudeItems,
+  watchJournalEntries,
+  watchPlanProgress,
+  watchWins
 } from '../services/selfCareService';
+import { updateAchievement } from '../services/userService';
 
 function sameCalendarDay(d1: Date, d2: Date) {
   return (
@@ -32,6 +29,31 @@ function sameCalendarDay(d1: Date, d2: Date) {
   );
 }
 
+// Function to check and update achievements
+async function checkAndUpdateAchievements(
+  userId: string,
+  gratitudeCount: number,
+  winsCount: number,
+  journalCount: number
+) {
+  try {
+    // Check Gratitude Champion: 20 gratitude items
+    if (gratitudeCount >= 20) {
+      await updateAchievement(userId, 'gratitudeChampion', true);
+    }
+    // Check Activity Master: 10 wins
+    if (winsCount >= 10) {
+      await updateAchievement(userId, 'activityMaster', true);
+    }
+    // Check Journal Warrior: 5 journal entries
+    if (journalCount >= 5) {
+      await updateAchievement(userId, 'journalWarrior', true);
+    }
+  } catch (err) {
+    console.error('Error updating achievements:', err);
+  }
+}
+
 export function useSelfCareData() {
   const { user } = useAuth();
   const { showToast } = useToast();
@@ -39,14 +61,9 @@ export function useSelfCareData() {
   const [gratitudeItems, setGratitudeItems] = useState<GratitudeItem[]>([]);
   const [wins, setWins] = useState<WinEntry[]>([]);
   const [journalEntries, setJournalEntries] = useState<SelfCareEntry[]>([]);
-  const [challenges, setChallenges] = useState<ChallengeItem[]>([]);
 
   const [loading, setLoading] = useState(true);
   const [savingJournal, setSavingJournal] = useState(false);
-  const [updatingChallengeIds, setUpdatingChallengeIds] = useState<string[]>([]);
-
-  // Track if we've seeded defaults for this user
-  const hasSeededRef = useRef<string | null>(null);
 
   // derived
   const lastJournalEntry = journalEntries[0];
@@ -57,28 +74,16 @@ export function useSelfCareData() {
     ? new Date(lastJournalEntry.timestamp)
     : null;
 
-  // current day/week strings (server-approximate)
+  // current day strings (server-approximate)
   const nowDate = Timestamp.now().toDate();
   const todayStr = nowDate.toISOString().slice(0, 10);
-  const weekStartStr = (() => {
-    const d = new Date(nowDate);
-    const day = d.getDay(); // 0=Sun, we want Monday start
-    const diff = (day + 6) % 7; // days since Monday
-    d.setDate(d.getDate() - diff);
-    return d.toISOString().slice(0, 10);
-  })();
 
   // Always allow journal editing - upsert logic handles same-day updates and new days
   const canEditJournal = true;
 
-  const challengeEditStatus: Record<string, boolean> = {};
-  challenges.forEach(c => {
-    const updated = c.lastUpdatedAt ? c.lastUpdatedAt.toDate() : null;
-    challengeEditStatus[c.id] = !!updated && sameCalendarDay(updated, nowDate);
-  });
-
   // plan progress for today
   const [planProgress, setPlanProgress] = useState<Record<string, boolean>>({});
+  // no per-day action tracking; allow unlimited adjustments
 
   // subscriptions
   useEffect(() => {
@@ -86,7 +91,6 @@ export function useSelfCareData() {
       setGratitudeItems([]);
       setWins([]);
       setJournalEntries([]);
-      setChallenges([]);
       setLoading(false);
       return;
     }
@@ -94,35 +98,10 @@ export function useSelfCareData() {
     setLoading(true);
     const unsubscribers: Array<() => void> = [];
 
-    const defaults: Omit<ChallengeItem, 'id'>[] = [
-      {
-        title: 'Weekly Challenge: Kindness Week',
-        description: 'Do one kind act every day this week',
-        days: 0,
-        totalDays: 7,
-        color: 'from-yellow-100 to-orange-100',
-      },
-      {
-        title: 'Weekly Challenge: Nature Time',
-        description: 'Spend 15 minutes in nature daily',
-        days: 0,
-        totalDays: 7,
-        color: 'from-green-100 to-mint-100',
-      },
-      {
-        title: 'Weekly Challenge: Gratitude Practice',
-        description: "Write down 3 things you're grateful for each day",
-        days: 0,
-        totalDays: 7,
-        color: 'from-sky-100 to-blue-100',
-      },
-    ];
-
     let initialized = {
       gratitude: false,
       wins: false,
       journal: false,
-      challenges: false,
     };
     const markInit = (key: keyof typeof initialized) => {
       initialized[key] = true;
@@ -131,49 +110,37 @@ export function useSelfCareData() {
       }
     };
 
+    // Store current counts for achievement checking
+    let currentGratitudeCount = 0;
+    let currentWinsCount = 0;
+    let currentJournalCount = 0;
+
     unsubscribers.push(
       watchGratitudeItems(user.uid, todayStr, data => {
+        currentGratitudeCount = data.length;
         setGratitudeItems(data);
         markInit('gratitude');
+        // Check achievements when gratitude changes
+        checkAndUpdateAchievements(user.uid, currentGratitudeCount, currentWinsCount, currentJournalCount);
       }, _err => showToast('Could not sync gratitude.', 'error'))
     );
     unsubscribers.push(
       watchWins(user.uid, todayStr, data => {
+        currentWinsCount = data.length;
         setWins(data);
         markInit('wins');
+        // Check achievements when wins change
+        checkAndUpdateAchievements(user.uid, currentGratitudeCount, currentWinsCount, currentJournalCount);
       }, _err => showToast('Could not sync wins.', 'error'))
     );
     unsubscribers.push(
       watchJournalEntries(user.uid, data => {
+        currentJournalCount = data.length;
         setJournalEntries(data);
         markInit('journal');
+        // Check achievements when journal changes
+        checkAndUpdateAchievements(user.uid, currentGratitudeCount, currentWinsCount, currentJournalCount);
       }, _err => showToast('Could not sync journal.', 'error'))
-    );
-    unsubscribers.push(
-      watchChallenges(user.uid, async data => {
-        // auto reset any challenge whose weekStart is outdated
-        const processed = data.map(c => {
-          if (c.weekStart !== weekStartStr) {
-            // schedule update but don't await to avoid blocking render
-            updateChallengeProgress(user.uid, c.id, 0, weekStartStr).catch(e => console.error('reset challenge', e));
-            return { ...c, days: 0, weekStart: weekStartStr };
-          }
-          return c;
-        });
-        setChallenges(processed);
-        markInit('challenges');
-        // if first load and empty, seed defaults (only once per user)
-        if (data.length === 0 && hasSeededRef.current !== user.uid) {
-          hasSeededRef.current = user.uid;
-          try {
-            await Promise.all(
-              defaults.map(d => createChallenge(user.uid, d))
-            );
-          } catch (err) {
-            console.error('failed seeding challenges', err);
-          }
-        }
-      }, _err => showToast('Could not sync challenges.', 'error'))
     );
     // plan progress watcher for today
     unsubscribers.push(
@@ -185,7 +152,9 @@ export function useSelfCareData() {
     return () => {
       unsubscribers.forEach(u => u());
     };
-  }, [user, showToast, todayStr, weekStartStr]);
+
+  }, [user, showToast, todayStr]);
+
 
   // actions
   const addNewGratitude = useCallback(
@@ -277,52 +246,23 @@ export function useSelfCareData() {
     [user, gratitudeItems, wins, canEditJournal, showToast, lastJournalEntry, lastJournalTimestamp, nowDate]
   );
 
-  const incrementChallenge = useCallback(
-    async (challenge: ChallengeItem) => {
-      if (!user) return;
-      // determine if week has rolled over
-      let nextDays = challenge.days + 1;
-      let weekStartParam: string | undefined;
-      if (challenge.weekStart !== weekStartStr) {
-        nextDays = 1;
-        weekStartParam = weekStartStr;
-      }
-      if (challenge.days >= challenge.totalDays && challenge.weekStart === weekStartStr) return;
-      setUpdatingChallengeIds(prev => [...prev, challenge.id]);
-      try {
-        await updateChallengeProgress(user.uid, challenge.id, nextDays, weekStartParam);
-        showToast('Progress updated.');
-      } catch (err) {
-        console.error(err);
-        showToast('Could not update challenge.', 'error');
-      } finally {
-        setUpdatingChallengeIds(prev => prev.filter(id => id !== challenge.id));
-      }
-    },
-    [user, challengeEditStatus, showToast, weekStartStr]
-  );
-
   return {
     data: {
       gratitudeItems,
       wins,
       journalText,
       lastJournalTimestamp,
-      challenges,
       canEditJournal,
-      challengeEditStatus,
       planProgress,
     },
     loading,
     savingJournal,
-    updatingChallengeIds,
     actions: {
       addNewGratitude,
       removeGratitude,
       addNewWin,
       removeWin,
       saveJournal,
-      incrementChallenge,
       togglePlanItem: useCallback(async (key: string, value: boolean) => {
         if (!user) return;
         try {

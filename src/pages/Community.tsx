@@ -1,9 +1,9 @@
-import { Heart, MessageCircle, Shield, Users } from 'lucide-react';
-import { useEffect, useState } from 'react';
 import type { DocumentData, QueryDocumentSnapshot } from 'firebase/firestore';
-import { CommunityStory, fetchStories, postStory } from '../services/communityService';
-import { useToast } from '../context/ToastContext';
+import { Edit2, Heart, MessageCircle, Shield, Trash2, Users, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
+import { CommunityStory, deleteStory, fetchStories, postStory, updateStory } from '../services/communityService';
 
 const PAGE_SIZE = 10;
 
@@ -13,11 +13,14 @@ export default function Community() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [nextCursor, setNextCursor] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
   const [showSubmit, setShowSubmit] = useState(false);
+  const [showUserStories, setShowUserStories] = useState(false);
   const [newExcerpt, setNewExcerpt] = useState('');
+  const [editingStory, setEditingStory] = useState<CommunityStory | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const { showToast } = useToast();
   const { user, userProfile } = useAuth();
 
+  // Fetch all stories
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -37,6 +40,9 @@ export default function Community() {
     })();
     return () => { cancelled = true; };
   }, []);
+
+  // Get user's own stories from the fetched stories
+  const userStories = stories.filter(story => user && story.authorId === user.uid);
 
   const supportResources = [
     {
@@ -60,6 +66,72 @@ export default function Community() {
       description: 'All interactions are respectful, anonymous, and moderated',
     },
   ];
+
+  // Handle posting a new story
+  const handlePostStory = async () => {
+    if (!newExcerpt.trim()) return;
+    setSubmitting(true);
+    try {
+      await postStory(newExcerpt.trim(), user ? (userProfile?.name ?? null) : null, user?.uid ?? null);
+      const { stories: fetched, nextCursor: cursor } = await fetchStories(PAGE_SIZE);
+      setStories(fetched);
+      setNextCursor(cursor);
+      setShowSubmit(false);
+      setNewExcerpt('');
+      showToast('Your story was shared. Thank you.');
+    } catch (e) {
+      console.error('Failed to submit story', e);
+      showToast('Failed to share. Try again.', 'error');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Handle editing a story
+  const handleEditStory = async () => {
+    if (!editingStory || !newExcerpt.trim()) return;
+    setSubmitting(true);
+    try {
+      await updateStory(editingStory.id!, newExcerpt.trim());
+      
+      // Refresh stories
+      const { stories: fetched, nextCursor: cursor } = await fetchStories(PAGE_SIZE);
+      setStories(fetched);
+      setNextCursor(cursor);
+      
+      setEditingStory(null);
+      setNewExcerpt('');
+      showToast('Your story has been updated.');
+    } catch (e) {
+      console.error('Failed to update story', e);
+      showToast('Failed to update. Try again.', 'error');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Handle deleting a story
+  const handleDeleteStory = async (storyId: string) => {
+    if (!confirm('Are you sure you want to delete this story?')) return;
+    try {
+      await deleteStory(storyId);
+      
+      // Refresh stories
+      const { stories: fetched, nextCursor: cursor } = await fetchStories(PAGE_SIZE);
+      setStories(fetched);
+      setNextCursor(cursor);
+      
+      showToast('Your story has been deleted.');
+    } catch (e) {
+      console.error('Failed to delete story', e);
+      showToast('Failed to delete. Try again.', 'error');
+    }
+  };
+
+  // Check if a story belongs to the current user
+  const isOwnStory = (story: CommunityStory) => {
+    return user && story.authorId === user.uid;
+  };
 
   return (
     <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
@@ -102,81 +174,177 @@ export default function Community() {
           </div>
         </section>
 
+        {/* Action Buttons */}
+        <section className="mb-8 flex flex-wrap gap-4">
+          <button 
+            onClick={() => setShowSubmit(true)} 
+            className="px-6 py-2 rounded-lg bg-gradient-to-r from-mint-500 to-sky-500 text-white font-semibold hover:shadow-softLg transition-all"
+          >
+            Share Your Story
+          </button>
+          {user && userStories.length > 0 && (
+            <button 
+              onClick={() => setShowUserStories(!showUserStories)} 
+              className="px-6 py-2 rounded-lg bg-white border-2 border-mint-500 text-mint-600 font-semibold hover:bg-mint-50 transition-all"
+            >
+              {showUserStories ? 'Hide My Stories' : 'View My Stories'}
+            </button>
+          )}
+        </section>
+
+        {/* User's Stories Section */}
+        {showUserStories && user && userStories.length > 0 && (
+          <section className="mb-12 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-2xl p-8 border border-indigo-200">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">My Stories</h2>
+            <div className="grid md:grid-cols-2 gap-6">
+              {userStories.map(story => (
+                <div
+                  key={story.id}
+                  className="bg-white rounded-2xl p-6 shadow-soft hover:shadow-softLg transition-all duration-300 relative"
+                >
+                  {/* Edit/Delete buttons */}
+                  <div className="absolute top-4 right-4 flex gap-2">
+                    <button 
+                      onClick={() => { setEditingStory(story); setNewExcerpt(story.excerpt); }}
+                      className="p-2 text-gray-400 hover:text-mint-600 transition-colors"
+                      title="Edit"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </button>
+                    <button 
+                      onClick={() => handleDeleteStory(story.id!)}
+                      className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+                      title="Delete"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <p className="text-gray-700 mb-4 pr-12">{story.excerpt}</p>
+                  <div className="flex items-center justify-between text-sm text-gray-600 mb-4 pb-4 border-b border-gray-200">
+                    <span>Anonymous</span>
+                    <span>{story.createdAt?.toDate ? story.createdAt.toDate().toLocaleDateString() : 'Recently'}</span>
+                  </div>
+                  <div className="flex gap-4">
+                    <span className="flex items-center gap-2 text-gray-600">
+                      <Heart className="w-4 h-4" />
+                      <span className="text-xs">{story.reactions}</span>
+                    </span>
+                    <span className="flex items-center gap-2 text-gray-600">
+                      <MessageCircle className="w-4 h-4" />
+                      <span className="text-xs">{story.comments}</span>
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Submit Story Modal */}
+        {showSubmit && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+            role="dialog"
+            aria-modal="true"
+            onClick={(e) => e.target === e.currentTarget && (setShowSubmit(false), setNewExcerpt(''))}
+          >
+            <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-softLg" onClick={e => e.stopPropagation()}>
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-bold">Share Your Story</h3>
+                <button onClick={() => { setShowSubmit(false); setNewExcerpt(''); }} className="text-gray-400 hover:text-gray-600">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <p className="text-sm text-gray-600 mb-2">Posts are shown as Anonymous to protect privacy.</p>
+              <textarea
+                className="w-full h-32 p-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-mint-500"
+                value={newExcerpt}
+                onChange={e => setNewExcerpt(e.target.value)}
+                placeholder="Write something you'd like to share..."
+              />
+              <div className="mt-4 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => { setShowSubmit(false); setNewExcerpt(''); }}
+                  className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={submitting || !newExcerpt.trim()}
+                  onClick={handlePostStory}
+                  className="px-4 py-2 rounded-lg bg-mint-500 text-white hover:bg-mint-600 disabled:opacity-60"
+                >
+                  {submitting ? 'Sharing…' : 'Submit'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Edit Story Modal */}
+        {editingStory && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+            role="dialog"
+            aria-modal="true"
+            onClick={(e) => e.target === e.currentTarget && (setEditingStory(null), setNewExcerpt(''))}
+          >
+            <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-softLg" onClick={e => e.stopPropagation()}>
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-bold">Edit Your Story</h3>
+                <button onClick={() => { setEditingStory(null); setNewExcerpt(''); }} className="text-gray-400 hover:text-gray-600">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <textarea
+                className="w-full h-32 p-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-mint-500"
+                value={newExcerpt}
+                onChange={e => setNewExcerpt(e.target.value)}
+                placeholder="Write something you'd like to share..."
+              />
+              <div className="mt-4 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => { setEditingStory(null); setNewExcerpt(''); }}
+                  className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={submitting || !newExcerpt.trim()}
+                  onClick={handleEditStory}
+                  className="px-4 py-2 rounded-lg bg-mint-500 text-white hover:bg-mint-600 disabled:opacity-60"
+                >
+                  {submitting ? 'Saving…' : 'Save Changes'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         <section id="community-stories">
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-3xl font-bold text-gray-900">Community Stories</h2>
-            <button onClick={() => setShowSubmit(true)} className="px-6 py-2 rounded-lg bg-gradient-to-r from-mint-500 to-sky-500 text-white font-semibold hover:shadow-softLg transition-all">
-              Share Your Story
-            </button>
-          {showSubmit && (
-            <div
-              className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-              role="dialog"
-              aria-modal="true"
-              onClick={(e) => e.target === e.currentTarget && (setShowSubmit(false), setNewExcerpt(''))}
-            >
-              <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-softLg" onClick={e => e.stopPropagation()}>
-                <h3 className="text-xl font-bold mb-4">Share Your Story</h3>
-                <p className="text-sm text-gray-600 mb-2">Posts are shown as Anonymous to protect privacy.</p>
-                <textarea
-                  className="w-full h-32 p-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-mint-500"
-                  value={newExcerpt}
-                  onChange={e => setNewExcerpt(e.target.value)}
-                  placeholder="Write something you'd like to share..."
-                />
-                <div className="mt-4 flex justify-end gap-2">
-                  <button
-                    type="button"
-                    onClick={() => { setShowSubmit(false); setNewExcerpt(''); }}
-                    className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    disabled={submitting || !newExcerpt.trim()}
-                    onClick={async () => {
-                      if (!newExcerpt.trim()) return;
-                      setSubmitting(true);
-                      try {
-                        await postStory(newExcerpt.trim(), user ? (userProfile?.name ?? null) : null);
-                        const { stories: fetched, nextCursor: cursor } = await fetchStories(PAGE_SIZE);
-                        setStories(fetched);
-                        setNextCursor(cursor);
-                        setShowSubmit(false);
-                        setNewExcerpt('');
-                        showToast('Your story was shared. Thank you.');
-                      } catch (e) {
-                        console.error('Failed to submit story', e);
-                        showToast('Failed to share. Try again.', 'error');
-                      } finally {
-                        setSubmitting(false);
-                      }
-                    }}
-                    className="px-4 py-2 rounded-lg bg-mint-500 text-white hover:bg-mint-600 disabled:opacity-60"
-                  >
-                    {submitting ? 'Sharing…' : 'Submit'}
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
           </div>
 
           <div className="grid md:grid-cols-2 gap-6">
             {loadingStories ? (
-            <p className="text-center text-gray-500">Loading stories…</p>
+            <p className="text-center text-gray-500 col-span-2">Loading stories…</p>
           ) : stories.length === 0 ? (
-            <p className="text-center text-gray-500">No stories yet. Be the first to share!</p>
+            <p className="text-center text-gray-500 col-span-2">No stories yet. Be the first to share!</p>
           ) : (
             stories.map(story => (
               <div
                 key={story.id}
                 className="bg-white rounded-2xl p-6 shadow-soft hover:shadow-softLg transition-all duration-300 cursor-pointer group"
               >
-                <p className="text-gray-700 mb-4 line-clamp-3">"{story.excerpt}"</p>
+                <p className="text-gray-700 mb-4 line-clamp-4">{story.excerpt}</p>
                 <div className="flex items-center justify-between text-sm text-gray-600 mb-4 pb-4 border-b border-gray-200">
                   <span>Anonymous</span>
+                  <span>{story.createdAt?.toDate ? story.createdAt.toDate().toLocaleDateString() : 'Recently'}</span>
                 </div>
                 <div className="flex gap-4">
                   <button className="flex items-center gap-2 text-gray-600 hover:text-mint-600 transition-colors group-hover:translate-x-0.5">

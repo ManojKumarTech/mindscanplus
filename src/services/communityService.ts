@@ -1,14 +1,18 @@
 import {
-    addDoc,
-    collection,
-    DocumentData,
-    getDocs,
-    limit,
-    orderBy,
-    query,
-    QueryDocumentSnapshot,
-    serverTimestamp,
-    startAfter,
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  DocumentData,
+  getDocs,
+  limit,
+  orderBy,
+  query,
+  QueryDocumentSnapshot,
+  serverTimestamp,
+  startAfter,
+  updateDoc,
+  where,
 } from 'firebase/firestore';
 import { db } from '../backend/firebase';
 
@@ -16,6 +20,7 @@ export interface CommunityStory {
   id?: string;
   excerpt: string;
   author?: string | null;
+  authorId?: string | null;
   reactions: number;
   comments: number;
   createdAt?: any;
@@ -27,11 +32,13 @@ export interface CommunityStory {
  */
 export async function postStory(
   excerpt: string,
-  author?: string | null
+  author?: string | null,
+  authorId?: string | null
 ): Promise<string> {
   const docRef = await addDoc(collection(db, 'communityStories'), {
     excerpt,
     author: author || null,
+    authorId: authorId || null,
     reactions: 0,
     comments: 0,
     createdAt: serverTimestamp(),
@@ -63,6 +70,7 @@ export async function fetchStories(
       id: doc.id,
       excerpt: data.excerpt,
       author: data.author,
+      authorId: data.authorId,
       reactions: data.reactions,
       comments: data.comments,
       createdAt: data.createdAt,
@@ -71,4 +79,69 @@ export async function fetchStories(
 
   const last = snap.docs[snap.docs.length - 1] || null;
   return { stories, nextCursor: last };
+}
+
+/**
+ * Fetch stories by a specific user
+ */
+export async function fetchUserStories(
+  userId: string,
+  pageSize = 10
+): Promise<CommunityStory[]> {
+  const q = query(
+    collection(db, 'communityStories'),
+    where('authorId', '==', userId),
+    orderBy('createdAt', 'desc'),
+    limit(pageSize)
+  );
+
+  const snap = await getDocs(q);
+  return snap.docs.map(doc => {
+    const data = doc.data();
+    return {
+      id: doc.id,
+      excerpt: data.excerpt,
+      author: data.author,
+      authorId: data.authorId,
+      reactions: data.reactions,
+      comments: data.comments,
+      createdAt: data.createdAt,
+    } as CommunityStory;
+  });
+}
+
+/**
+ * Update a story
+ */
+export async function updateStory(
+  storyId: string,
+  newExcerpt: string
+): Promise<void> {
+  const storyDoc = doc(db, 'communityStories', storyId);
+  await updateDoc(storyDoc, {
+    excerpt: newExcerpt,
+    updatedAt: serverTimestamp(),
+  });
+}
+
+/**
+ * Delete a story
+ */
+export async function deleteStory(storyId: string): Promise<void> {
+  const storyDoc = doc(db, 'communityStories', storyId);
+  await deleteDoc(storyDoc);
+}
+
+/**
+ * React to a story (increment reactions)
+ */
+export async function reactToStory(storyId: string): Promise<void> {
+  const storyDoc = doc(db, 'communityStories', storyId);
+  const snap = await getDocs(query(collection(db, 'communityStories')));
+  // This is a simple implementation - in production you'd use increment
+  const story = snap.docs.find(d => d.id === storyId);
+  if (story) {
+    const currentReactions = story.data().reactions || 0;
+    await updateDoc(storyDoc, { reactions: currentReactions + 1 });
+  }
 }

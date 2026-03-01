@@ -1,9 +1,7 @@
 import GratitudeList from '../components/selfcare/GratitudeList';
 import JournalSection from '../components/selfcare/JournalSection';
 import SelfCarePlan from '../components/selfcare/SelfCarePlan';
-import WeeklyChallenges from '../components/selfcare/WeeklyChallenges';
 import WinsTracker from '../components/selfcare/WinsTracker';
-import { Loader } from '../components/ui/Loader';
 import { useSelfCareData } from '../hooks/useSelfCareData';
 
 // page component
@@ -14,7 +12,6 @@ export default function SelfCare() {
     data,
     loading,
     savingJournal,
-    updatingChallengeIds,
     actions,
   } = useSelfCareData();
 
@@ -45,35 +42,32 @@ export default function SelfCare() {
     },
   ];
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center py-12 px-4">
-        <Loader />
-      </div>
-    );
-  }
+
 
   return (
-    <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8 bg-gray-50">
+    <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         <header className="mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">Self-Care & Growth</h1>
           <p className="text-gray-600">
             Build sustainable habits and celebrate your progress. You deserve this care.
           </p>
+          {loading && (
+            <p className="text-sm text-gray-500 mt-2">Synchronizing your data…</p>
+          )}
         </header>
 
         <div className="grid lg:grid-cols-2 gap-8 mb-12">
           <GratitudeList
             items={data.gratitudeItems}
-            loading={false}
+            loading={loading}
             onAdd={actions.addNewGratitude}
             onRemove={actions.removeGratitude}
           />
 
           <WinsTracker
             wins={data.wins}
-            loading={false}
+            loading={loading}
             onAdd={actions.addNewWin}
             onRemove={actions.removeWin}
           />
@@ -91,14 +85,6 @@ export default function SelfCare() {
           plans={selfCarePlan}
           progress={data.planProgress}
           onToggle={actions.togglePlanItem}
-        />
-
-        <WeeklyChallenges
-          challenges={data.challenges}
-          loading={false}
-          onIncrement={actions.incrementChallenge}
-          editStatus={data.challengeEditStatus}
-          updatingIds={updatingChallengeIds}
         />
       </div>
     </div>

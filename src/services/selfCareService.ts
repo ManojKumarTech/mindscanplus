@@ -1,21 +1,21 @@
 import {
-    addDoc,
-    collection,
-    deleteDoc,
-    doc,
-    DocumentData,
-    getDocs,
-    onSnapshot,
-    orderBy,
-    query,
-    Query,
-    QuerySnapshot,
-    serverTimestamp,
-    setDoc,
-    Timestamp,
-    Unsubscribe,
-    updateDoc,
-    where,
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  DocumentData,
+  getDocs,
+  onSnapshot,
+  orderBy,
+  query,
+  Query,
+  QuerySnapshot,
+  serverTimestamp,
+  setDoc,
+  Timestamp,
+  Unsubscribe,
+  updateDoc,
+  where,
 } from 'firebase/firestore';
 import { db } from '../backend/firebase';
 
@@ -291,6 +291,13 @@ export async function updateChallengeProgress(
   const update: any = { days, lastUpdatedAt: serverTimestamp() };
   if (weekStart !== undefined) update.weekStart = weekStart;
   await updateDoc(ref, update);
+}
+
+export async function deleteChallenge(
+  userId: string,
+  challengeId: string
+): Promise<void> {
+  await deleteDoc(doc(db, 'users', userId, 'challenges', challengeId));
 }
 
 export async function createChallenge(
