@@ -9,6 +9,7 @@ interface AuthContextValue {
   userProfile: { name?: string; email?: string } | null;
   loading: boolean;
   logout: () => Promise<void>;
+  setUserProfile: (profile: { name?: string; email?: string } | null) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -23,7 +24,7 @@ export function useAuth() {
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [userProfile, setUserProfile] = useState<{ name?: string; email?: string } | null>(null);
+  const [userProfile, setUserProfileState] = useState<{ name?: string; email?: string } | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -33,13 +34,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (usr) {
         const profile = await fetchUserProfile(usr.uid);
-        setUserProfile(
+        setUserProfileState(
           profile
             ? { name: profile.name || usr.displayName, email: profile.email }
             : { name: usr.displayName || 'User', email: usr.email }
         );
       } else {
-        setUserProfile(null);
+        setUserProfileState(null);
       }
     });
 
@@ -50,6 +51,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return authService.logout();
   };
 
-  const value: AuthContextValue = { user, userProfile, loading, logout };
+  // Allow external components to set userProfile directly (e.g., after login)
+  const setUserProfile = (profile: { name?: string; email?: string } | null) => {
+    setUserProfileState(profile);
+  };
+
+  const value: AuthContextValue = { user, userProfile, loading, logout, setUserProfile };
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

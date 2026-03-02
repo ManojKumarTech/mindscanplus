@@ -2,23 +2,44 @@ import { User } from 'firebase/auth';
 import { doc, getDoc, getFirestore, onSnapshot, setDoc, Unsubscribe, updateDoc } from 'firebase/firestore';
 
 /**
- * Ensure a Firestore user document exists and return profile data
+ * Extract name from email (before the @ symbol)
  */
-export async function ensureUserProfile(user: User) {
+function getNameFromEmail(email: string | null): string {
+  if (!email) return 'User';
+  const parts = email.split('@');
+  return parts[0] || 'User';
+}
+
+/**
+ * Ensure a Firestore user document exists and return profile data
+ * @param user - Firebase user object
+ * @param customName - Optional custom name (e.g., from signup form)
+ */
+export async function ensureUserProfile(user: User, customName?: string) {
   const db = getFirestore();
   const userDoc = doc(db, 'users', user.uid);
   const snapshot = await getDoc(userDoc);
+  
+  // Use customName if provided, otherwise use displayName (Google), otherwise extract from email
+  const derivedName = customName || user.displayName || getNameFromEmail(user.email);
+  
   if (!snapshot.exists()) {
     await setDoc(userDoc, {
       email: user.email,
-      name: user.displayName,
+      name: derivedName,
       createdAt: new Date(),
     });
-    return { email: user.email, name: user.displayName };
+    return { email: user.email, name: derivedName };
   }
 
   const data = snapshot.data();
-  return { email: data.email || user.email, name: data.name || user.displayName };
+  // If no name in DB, update with derived name
+  if (!data.name) {
+    await updateDoc(userDoc, { name: derivedName });
+    return { email: data.email || user.email, name: derivedName };
+  }
+  
+  return { email: data.email || user.email, name: data.name };
 }
 
 export async function fetchUserProfile(uid: string) {
