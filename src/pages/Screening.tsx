@@ -1,5 +1,5 @@
 import { CheckCircle, ChevronRight, Brain, Activity } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -31,6 +31,52 @@ export default function Screening() {
   } = useAdaptiveScreeningFlow();
 
   const [isSaving, setIsSaving] = useState(false);
+  const [errorItemId, setErrorItemId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (phase === 'BASE_QUESTIONS' && allBaseAnswered) {
+      setErrorItemId(null);
+      setTimeout(() => {
+        document.getElementById('continue-button')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 300);
+    }
+  }, [allBaseAnswered, phase]);
+
+  useEffect(() => {
+    if (phase === 'FOLLOW_UP' && allFollowUpsAnswered) {
+      setErrorItemId(null);
+      setTimeout(() => {
+        document.getElementById('finish-button')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 300);
+    }
+  }, [allFollowUpsAnswered, phase]);
+
+  const handleBaseSubmit = () => {
+    if (allBaseAnswered) {
+      setErrorItemId(null);
+      startFollowUps();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      const unanswered = themes.find(t => getBaseResponse(t.id) === null);
+      if (unanswered) {
+        setErrorItemId(`base-${unanswered.id}`);
+        document.getElementById(`base-${unanswered.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+  };
+
+  const handleFollowUpSubmit = () => {
+    if (allFollowUpsAnswered) {
+      setErrorItemId(null);
+      handleFinish();
+    } else {
+      const unansweredIdx = activeFollowUps.findIndex((_, idx) => getFollowUpResponse(idx) === null);
+      if (unansweredIdx !== -1) {
+        setErrorItemId(`followup-${unansweredIdx}`);
+        document.getElementById(`followup-${unansweredIdx}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+  };
 
   const handleFinish = async () => {
     finishScreening();
@@ -70,7 +116,14 @@ export default function Screening() {
 
             <div className="space-y-8 mb-8">
               {themes.map((theme, idx) => (
-                 <div key={theme.id} className="bg-white rounded-2xl p-8 shadow-soft animate-slideUp" style={{ animationDelay: `${idx * 100}ms` }}>
+                 <div 
+                   id={`base-${theme.id}`}
+                   key={theme.id} 
+                   className={`bg-white rounded-2xl p-8 shadow-soft animate-slideUp transition-all duration-300 ${
+                     errorItemId === `base-${theme.id}` ? 'ring-2 ring-red-500 bg-red-50' : ''
+                   }`} 
+                   style={{ animationDelay: `${idx * 100}ms` }}
+                 >
                    <div className="flex items-center gap-3 mb-2">
                       <div className="p-2 bg-mint-100 rounded-lg text-mint-600">
                          {idx === 0 ? <Brain size={24} /> : <Activity size={24} />}
@@ -79,32 +132,35 @@ export default function Screening() {
                    </div>
                    <p className="text-gray-600 mb-6 font-medium">"{theme.baseQuestion}"</p>
                    
-                   <div className="flex gap-2 justify-between">
-                      {[1, 2, 3, 4, 5].map(value => (
+                    <div className="flex flex-col gap-2">
+                      {[
+                        { value: 1, label: 'Never' },
+                        { value: 2, label: 'Rarely' },
+                        { value: 3, label: 'Sometimes' },
+                        { value: 4, label: 'Often' },
+                        { value: 5, label: 'Always' }
+                      ].map(option => (
                         <button
-                          key={value}
-                          onClick={() => handleBaseResponse(theme.id, value)}
-                          className={`flex-1 py-3 px-2 rounded-lg font-medium transition-all duration-200 ${getBaseResponse(theme.id) === value
+                          key={option.value}
+                          onClick={() => handleBaseResponse(theme.id, option.value)}
+                          className={`w-full py-3 px-4 rounded-lg font-medium transition-all duration-200 text-left ${
+                            getBaseResponse(theme.id) === option.value
                               ? 'bg-gradient-to-r from-mint-500 to-sky-500 text-white shadow-soft scale-[1.02]'
                               : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                            }`}
+                          }`}
                         >
-                          {value}
+                          {option.label}
                         </button>
                       ))}
-                    </div>
-                    <div className="flex justify-between text-xs text-gray-500 mt-2 px-1">
-                      <span>Not at all</span>
-                      <span>Extremely</span>
                     </div>
                  </div>
               ))}
             </div>
 
             <button
-              onClick={startFollowUps}
-              disabled={!allBaseAnswered}
-              className="w-full px-6 py-4 rounded-xl bg-gradient-to-r from-mint-500 to-sky-500 text-white font-semibold text-lg hover:shadow-softLg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              id="continue-button"
+              onClick={handleBaseSubmit}
+              className="w-full px-6 py-4 rounded-xl bg-gradient-to-r from-mint-500 to-sky-500 text-white font-semibold text-lg hover:shadow-softLg transition-all duration-200 flex items-center justify-center gap-2"
             >
               Continue Screening <ChevronRight className="w-5 h-5" />
             </button>
@@ -121,19 +177,32 @@ export default function Screening() {
             <div className="bg-white rounded-2xl p-8 shadow-soft mb-8 animate-slideUp">
                <div className="space-y-8">
                 {activeFollowUps.map((question, qIdx) => (
-                  <div key={qIdx} className="space-y-4 border-b border-gray-100 pb-8 last:border-0 last:pb-0">
+                  <div 
+                    id={`followup-${qIdx}`}
+                    key={qIdx} 
+                    className={`space-y-4 border-b border-gray-100 pb-8 last:border-0 last:pb-0 transition-all duration-300 ${
+                      errorItemId === `followup-${qIdx}` ? 'ring-2 ring-red-400 bg-red-50/50 p-4 rounded-xl -mx-4' : ''
+                    }`}
+                  >
                     <p className="font-medium text-gray-900 text-lg leading-relaxed">{qIdx + 1}. {question}</p>
-                    <div className="flex gap-2 justify-between">
-                      {[1, 2, 3, 4, 5].map(value => (
+                    <div className="flex flex-col gap-2">
+                      {[
+                        { value: 1, label: 'Never' },
+                        { value: 2, label: 'Rarely' },
+                        { value: 3, label: 'Sometimes' },
+                        { value: 4, label: 'Often' },
+                        { value: 5, label: 'Always' }
+                      ].map(option => (
                         <button
-                          key={value}
-                          onClick={() => handleFollowUpResponse(qIdx, value)}
-                          className={`flex-1 py-2 px-3 rounded-lg font-medium transition-all duration-200 ${getFollowUpResponse(qIdx) === value
+                          key={option.value}
+                          onClick={() => handleFollowUpResponse(qIdx, option.value)}
+                          className={`w-full py-3 px-4 rounded-lg font-medium transition-all duration-200 text-left ${
+                            getFollowUpResponse(qIdx) === option.value
                               ? 'bg-gradient-to-r from-mint-500 to-sky-500 text-white shadow-soft scale-[1.02]'
                               : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                            }`}
+                          }`}
                         >
-                          {value}
+                          {option.label}
                         </button>
                       ))}
                     </div>
@@ -143,8 +212,9 @@ export default function Screening() {
             </div>
 
             <button
-              onClick={handleFinish}
-              disabled={!allFollowUpsAnswered || isSaving}
+              id="finish-button"
+              onClick={handleFollowUpSubmit}
+              disabled={isSaving}
               className="w-full px-6 py-4 rounded-xl bg-gradient-to-r from-mint-500 to-sky-500 text-white font-semibold text-lg hover:shadow-softLg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {isSaving ? 'Analyzing...' : 'See Final Results'}

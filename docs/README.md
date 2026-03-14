@@ -10,6 +10,7 @@ This `/docs` folder acts as the single source of truth for the codebase architec
 - **[Feature & Page Guide](./pages.md)**: Details the purpose and function of each main UI route (Dashboard, Screening, Resources, etc.).
 - **[Business Logic & Systems](./logic.md)**: Explains the internal mechanisms like the Adaptive Screening Engine, Streak calculation, and Firebase data structures.
 - **[Asset Guidelines](./assets.md)**: Describes where images, SVGs, and audio embeds are stored or referenced.
+- **[Changelog](./CHANGELOG.md)**: Documentation of recent bug fixes, features, and config upgrades.
 
 ### Legacy / Supplemental Documents
 *These files were historically used during development but are still relevant for understanding earlier architectural decisions:*

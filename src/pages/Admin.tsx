@@ -1,4 +1,4 @@
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, collectionGroup } from 'firebase/firestore';
 import { Calendar, Eye, RefreshCw, Search, TrendingUp, Users, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -46,6 +46,8 @@ export default function Admin() {
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
   const [resultsLoading, setResultsLoading] = useState(false);
   const [userStats, setUserStats] = useState<UserStats | null>(null);
+  const [userLatestScreening, setUserLatestScreening] = useState<Record<string, Date>>({});
+  const [totalScreeningsCount, setTotalScreeningsCount] = useState<number | string>('–');
 
   // Fetch all users
   const fetchUsers = async (forceRefresh = false) => {
@@ -54,6 +56,26 @@ export default function Admin() {
       const q = await getDocs(collection(db, 'users'));
       const arr: UserRecord[] = q.docs.map(d => ({ id: d.id, ...d.data() })) as any;
       setUsers(arr);
+
+      try {
+        const screeningsQuery = await getDocs(collectionGroup(db, 'screeningResults'));
+        setTotalScreeningsCount(screeningsQuery.size);
+
+        const latestDates: Record<string, Date> = {};
+        screeningsQuery.forEach(doc => {
+          const data = doc.data();
+          const userId = doc.ref.parent.parent?.id;
+          if (userId && data.createdAt) {
+            const date = data.createdAt.toDate ? data.createdAt.toDate() : new Date(data.createdAt);
+            if (!latestDates[userId] || date > latestDates[userId]) {
+              latestDates[userId] = date;
+            }
+          }
+        });
+        setUserLatestScreening(latestDates);
+      } catch (e) {
+        console.error('Error fetching global screenings (may require index):', e);
+      }
     } catch (err) {
       console.error('Error fetching users:', err);
     } finally {
@@ -88,49 +110,45 @@ export default function Admin() {
     // Status filter
     if (filterStatus === 'active') {
       filtered = filtered.filter(u => {
-        if (!u.lastActive && !u.createdAt) return false;
-        const lastActive = u.lastActive?.toDate?.() || (u.createdAt?.toDate?.() ? new Date(u.createdAt.toDate().getTime() + 24*60*60*1000) : null);
-        if (!lastActive) return false;
-        const weekAgo = new Date();
-        weekAgo.setDate(weekAgo.getDate() - 7);
-        return lastActive > weekAgo;
+        const lastScreening = userLatestScreening[u.id];
+        if (!lastScreening) return false;
+        const threeDaysAgo = new Date();
+        threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+        return lastScreening > threeDaysAgo;
       });
     } else if (filterStatus === 'inactive') {
       filtered = filtered.filter(u => {
-        const lastActive = u.lastActive?.toDate?.() || u.createdAt?.toDate?.();
-        if (!lastActive) return true;
-        const weekAgo = new Date();
-        weekAgo.setDate(weekAgo.getDate() - 7);
-        return lastActive <= weekAgo;
+        const lastScreening = userLatestScreening[u.id];
+        if (!lastScreening) return true;
+        const threeDaysAgo = new Date();
+        threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+        return lastScreening <= threeDaysAgo;
       });
     }
 
     return filtered;
-  }, [users, searchTerm, filterStatus]);
+  }, [users, searchTerm, filterStatus, userLatestScreening]);
 
   // Overview statistics
   const stats = useMemo(() => {
     const totalUsers = users.length;
     const now = new Date();
-    const weekAgo = new Date(now);
-    weekAgo.setDate(weekAgo.getDate() - 7);
+    const threeDaysAgo = new Date(now);
+    threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
     
     const activeUsers = users.filter(u => {
-      const lastActive = u.lastActive?.toDate?.() || u.createdAt?.toDate?.();
-      if (!lastActive) return false;
-      return lastActive > weekAgo;
+      const lastScreening = userLatestScreening[u.id];
+      if (!lastScreening) return false;
+      return lastScreening > threeDaysAgo;
     }).length;
-
-    // totalScreenings requires a Firestore collectionGroup query — show N/A
-    const totalScreenings = '–';
 
     return {
       totalUsers,
       activeUsers,
-      totalScreenings,
+      totalScreenings: totalScreeningsCount,
       inactiveUsers: totalUsers - activeUsers
     };
-  }, [users]);
+  }, [users, userLatestScreening, totalScreeningsCount]);
 
   // Fetch user details when selected
   useEffect(() => {
@@ -353,26 +371,21 @@ export default function Admin() {
                           </td>
                           <td className="px-4 py-3">
                             <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                              u.lastActive?.toDate?.() || u.createdAt?.toDate?.() 
-                                ? (() => {
-                                    const lastActive = u.lastActive?.toDate?.() || u.createdAt?.toDate?.();
-                                    const weekAgo = new Date();
-                                    weekAgo.setDate(weekAgo.getDate() - 7);
-                                    return lastActive && lastActive > weekAgo 
-                                      ? 'bg-green-100 text-green-800' 
-                                      : 'bg-gray-100 text-gray-800';
-                                  })()
-                                : 'bg-gray-100 text-gray-800'
+                              (() => {
+                                const lastScreening = userLatestScreening[uid];
+                                const threeDaysAgo = new Date();
+                                threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+                                return lastScreening && lastScreening > threeDaysAgo 
+                                  ? 'bg-green-100 text-green-800' 
+                                  : 'bg-gray-100 text-gray-800';
+                              })()
                             }`}>
-                              {u.lastActive?.toDate?.() || u.createdAt?.toDate?.() 
-                                ? (() => {
-                                    const lastActive = u.lastActive?.toDate?.() || u.createdAt?.toDate?.();
-                                    const weekAgo = new Date();
-                                    weekAgo.setDate(weekAgo.getDate() - 7);
-                                    return lastActive && lastActive > weekAgo ? 'Active' : 'Inactive';
-                                  })()
-                                : 'Unknown'
-                              }
+                              {(() => {
+                                const lastScreening = userLatestScreening[uid];
+                                const threeDaysAgo = new Date();
+                                threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+                                return lastScreening && lastScreening > threeDaysAgo ? 'Active' : 'Inactive';
+                              })()}
                             </span>
                           </td>
                           <td className="px-4 py-3">

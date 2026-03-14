@@ -1,6 +1,5 @@
 {
   "hosting": {
-    "site": "mindscanplus",
     "public": "dist",
     "ignore": [
       "firebase.json",

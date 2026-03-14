@@ -1,0 +1,2260 @@
+﻿diff --git a/src/components/layout/Footer.tsx b/src/components/layout/Footer.tsx
+index 14a275e..3e5c7e1 100644
+--- a/src/components/layout/Footer.tsx
++++ b/src/components/layout/Footer.tsx
+@@ -1,6 +1,5 @@
+ import { Heart } from 'lucide-react';
+ import { Link } from 'react-router-dom';
+-import { Button } from '../ui/Button';
+ 
+ export default function Footer() {
+   return (
+@@ -22,62 +21,32 @@ export default function Footer() {
+           <div>
+             <h3 className="font-semibold text-gray-900 mb-3">Navigation</h3>
+             <ul className="space-y-2 text-sm text-gray-600">
+-              <li>
+-                <Link to="/" className="hover:text-mint-600 transition-colors">
+-                  Home
+-                </Link>
+-              </li>
+-              <li>
+-                <Link to="/screening" className="hover:text-mint-600 transition-colors">
+-                  Screening
+-                </Link>
+-              </li>
+-              <li>
+-                <Link
+-                  to="/emotional-care"
+-                  className="hover:text-mint-600 transition-colors"
+-                >
+-                  Emotional Care
+-                </Link>
+-              </li>
+-              <li>
+-                <Link to="/self-care" className="hover:text-mint-600 transition-colors">
+-                  Self-Care
+-                </Link>
+-              </li>
++              <li><Link to="/" className="hover:text-mint-600 transition-colors">Home</Link></li>
++              <li><Link to="/screening" className="hover:text-mint-600 transition-colors">Screening</Link></li>
++              <li><Link to="/emotional-care" className="hover:text-mint-600 transition-colors">Emotional Care</Link></li>
++              <li><Link to="/self-care" className="hover:text-mint-600 transition-colors">Self-Care</Link></li>
+             </ul>
+           </div>
+ 
+           <div>
+             <h3 className="font-semibold text-gray-900 mb-3">Resources</h3>
+             <ul className="space-y-2 text-sm text-gray-600">
+-              <li>
+-                <Link to="/community" className="hover:text-mint-600 transition-colors">
+-                  Community
+-                </Link>
+-              </li>
+-              <li>
+-                <Link to="/dashboard" className="hover:text-mint-600 transition-colors">
+-                  Dashboard
+-                </Link>
+-              </li>
+-              <li>
+-                <Link to="/resources" className="hover:text-mint-600 transition-colors">
+-                  Help & Support
+-                </Link>
+-              </li>
++              <li><Link to="/community" className="hover:text-mint-600 transition-colors">Community</Link></li>
++              <li><Link to="/dashboard" className="hover:text-mint-600 transition-colors">Dashboard</Link></li>
++              <li><Link to="/resources" className="hover:text-mint-600 transition-colors">Help &amp; Support</Link></li>
+             </ul>
+           </div>
+ 
+           <div>
+             <h3 className="font-semibold text-gray-900 mb-3">In Crisis?</h3>
+-            <p className="text-sm text-gray-600 mb-2">
++            <p className="text-sm text-gray-600 mb-3">
+               If you're in immediate danger, please reach out for help.
+             </p>
+-            <Link to="/resources">
+-              <Button variant="ghost" className="text-sm">
+-                Crisis Resources ΓåÆ
+-              </Button>
++            <Link
++              to="/resources"
++              className="inline-block text-sm font-semibold text-mint-600 hover:text-mint-700 transition-colors"
++            >
++              Crisis Resources ΓåÆ
+             </Link>
+           </div>
+         </div>
+@@ -87,7 +56,7 @@ export default function Footer() {
+             Remember: You matter. Your feelings matter. And you're not alone in this journey.
+           </p>
+           <p className="text-center text-gray-500 text-xs mt-4">
+-            ┬⌐ 2025 MindScan+. For crisis support, please contact a mental health professional or use the Resources page.
++            ┬⌐ 2026 MindScan+. For crisis support, please contact a mental health professional or use the Resources page.
+           </p>
+         </div>
+       </div>
+diff --git a/src/components/layout/Navbar.tsx b/src/components/layout/Navbar.tsx
+index fddfe33..c18a81d 100644
+--- a/src/components/layout/Navbar.tsx
++++ b/src/components/layout/Navbar.tsx
+@@ -1,14 +1,17 @@
+-import { Heart, Menu, X } from 'lucide-react';
++import { Heart, Menu, User, X } from 'lucide-react';
+ import { useState } from 'react';
+ import { Link, useLocation, useNavigate } from 'react-router-dom';
+ import { useAuth } from '../../context/AuthContext';
++import { ADMIN_UIDS } from '../../utils/constants';
+ import { Button } from '../ui/Button';
+ 
+ export default function Navbar() {
+   const [isOpen, setIsOpen] = useState(false);
+   const location = useLocation();
+   const navigate = useNavigate();
+-  const { user, logout } = useAuth();
++  const { user, userProfile, logout } = useAuth();
++
++  const isAdmin = user ? ADMIN_UIDS.includes(user.uid) : false;
+ 
+   const navItems = user
+     ? [
+@@ -19,7 +22,8 @@ export default function Navbar() {
+         { path: '/community', label: 'Community' },
+         { path: '/dashboard', label: 'Dashboard' },
+         { path: '/resources', label: 'Resources' },
+-        { path: '/admin', label: 'Admin' },
++        // Only show Admin link to admins
++        ...(isAdmin ? [{ path: '/admin', label: 'Admin' }] : []),
+       ]
+     : [{ path: '/login', label: 'Login' }];
+ 
+@@ -65,6 +69,17 @@ export default function Navbar() {
+ 
+           {user && (
+             <div className="hidden md:flex items-center gap-2">
++              {/* User name display */}
++              {userProfile?.name && (
++                <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded-lg">
++                  <div className="w-6 h-6 rounded-full bg-gradient-to-br from-mint-400 to-sky-400 flex items-center justify-center flex-shrink-0">
++                    <User className="w-3 h-3 text-white" />
++                  </div>
++                  <span className="text-sm font-medium text-gray-700 max-w-[120px] truncate">
++                    {userProfile.name}
++                  </span>
++                </div>
++              )}
+               <Link to="/resources" onClick={() => setIsOpen(false)}>
+                 <Button variant="secondary" className="text-sm">Get Help</Button>
+               </Link>
+@@ -100,6 +115,14 @@ export default function Navbar() {
+               {navItems.map(renderLink)}
+               {user && (
+                 <>
++                  {userProfile?.name && (
++                    <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg">
++                      <div className="w-6 h-6 rounded-full bg-gradient-to-br from-mint-400 to-sky-400 flex items-center justify-center">
++                        <User className="w-3 h-3 text-white" />
++                      </div>
++                      <span className="text-sm font-medium text-gray-700">{userProfile.name}</span>
++                    </div>
++                  )}
+                   <Link to="/resources" onClick={() => setIsOpen(false)}>
+                     <Button variant="secondary" className="mt-2 w-full">Get Help</Button>
+                   </Link>
+diff --git a/src/components/selfcare/GratitudeList.tsx b/src/components/selfcare/GratitudeList.tsx
+index 620bc5c..a8ab47e 100644
+--- a/src/components/selfcare/GratitudeList.tsx
++++ b/src/components/selfcare/GratitudeList.tsx
+@@ -27,29 +27,49 @@ export default function GratitudeList({ items, loading, onAdd, onRemove }: Props
+ 
+   return (
+     <section className="bg-white rounded-2xl p-8 shadow-soft" aria-label="Gratitude list">
+-      <h2 className="text-2xl font-bold text-gray-900 mb-6">Gratitude List</h2>
++      <div className="flex items-center justify-between mb-6">
++        <h2 className="text-2xl font-bold text-gray-900">Gratitude List</h2>
++        {items.length > 0 && (
++          <span className="text-sm font-semibold text-yellow-600 bg-yellow-50 px-3 py-1 rounded-full">
++            {items.length} {items.length === 1 ? 'item' : 'items'}
++          </span>
++        )}
++      </div>
++
+       {loading ? (
+-        <p className="text-sm text-gray-500 mb-4">Loading your gratitude listΓÇª</p>
+-      ) : null}
+-      <div className="space-y-4 mb-6">
+-        {items.map(item => (
+-          <div
+-            key={item.id}
+-            className="flex items-center gap-3 p-4 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg border border-yellow-200 hover:shadow-soft transition-all motion-safe:transition-opacity motion-safe:duration-200"
+-          >
+-            <Star className="w-5 h-5 text-yellow-500 fill-yellow-500 flex-shrink-0" />
+-            <p className="text-gray-700">{item.text}</p>
+-            <button
+-              type="button"
+-              onClick={() => onRemove(item)}
+-              className="ml-auto text-gray-400 hover:text-red-500 transition-colors"
+-              aria-label="Remove gratitude item"
++        <div className="space-y-3 mb-6">
++          {[1, 2].map(i => (
++            <div key={i} className="h-12 bg-gray-100 rounded-lg animate-pulse" />
++          ))}
++        </div>
++      ) : items.length === 0 ? (
++        <div className="text-center py-8 mb-6">
++          <div className="text-4xl mb-3">Γ£¿</div>
++          <p className="text-gray-500 text-sm">What are you grateful for today?</p>
++          <p className="text-gray-400 text-xs mt-1">Add your first gratitude item below.</p>
++        </div>
++      ) : (
++        <div className="space-y-3 mb-6">
++          {items.map(item => (
++            <div
++              key={item.id}
++              className="flex items-center gap-3 p-4 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg border border-yellow-200 hover:shadow-soft transition-all"
+             >
+-              <Trash2 className="w-4 h-4" />
+-            </button>
+-          </div>
+-        ))}
+-      </div>
++              <Star className="w-5 h-5 text-yellow-500 fill-yellow-500 flex-shrink-0" />
++              <p className="text-gray-700 flex-1">{item.text}</p>
++              <button
++                type="button"
++                onClick={() => onRemove(item)}
++                className="ml-auto text-gray-400 hover:text-red-500 transition-colors"
++                aria-label="Remove gratitude item"
++              >
++                <Trash2 className="w-4 h-4" />
++              </button>
++            </div>
++          ))}
++        </div>
++      )}
++
+       <div className="flex gap-2">
+         <input
+           type="text"
+diff --git a/src/components/selfcare/WinsTracker.tsx b/src/components/selfcare/WinsTracker.tsx
+index 619a5a7..98683fd 100644
+--- a/src/components/selfcare/WinsTracker.tsx
++++ b/src/components/selfcare/WinsTracker.tsx
+@@ -1,4 +1,4 @@
+-import { CheckCircle2, Plus, Trash2 } from 'lucide-react';
++import { CheckCircle2, Plus, Trash2, Trophy } from 'lucide-react';
+ import { KeyboardEvent, useState } from 'react';
+ import type { WinEntry } from '../../services/selfCareService';
+ 
+@@ -27,29 +27,50 @@ export default function WinsTracker({ wins, loading, onAdd, onRemove }: Props) {
+ 
+   return (
+     <section className="bg-white rounded-2xl p-8 shadow-soft" aria-label="Small wins tracker">
+-      <h2 className="text-2xl font-bold text-gray-900 mb-6">Small Wins Tracker</h2>
+-      {loading ? (
+-        <p className="text-sm text-gray-500 mb-4">Loading your winsΓÇª</p>
+-      ) : null}
+-      <div className="space-y-3 mb-6">
+-        {wins.map(win => (
+-          <div key={win.id} className="flex items-start gap-3 p-4 bg-mint-50 rounded-lg border border-mint-200 motion-safe:transition-opacity motion-safe:duration-200">
+-            <CheckCircle2 className="w-5 h-5 text-mint-600 flex-shrink-0 mt-0.5 fill-mint-600" />
+-            <div className="flex-1">
+-              <p className="text-gray-900 font-medium">{win.text}</p>
+-              <p className="text-xs text-gray-500">{win.date}</p>
+-            </div>
+-            <button
+-              type="button"
+-              onClick={() => onRemove(win)}
+-              className="text-gray-400 hover:text-red-500 transition-colors"
+-              aria-label="Remove win"
+-            >
+-              <Trash2 className="w-4 h-4" />
+-            </button>
++      <div className="flex items-center justify-between mb-6">
++        <h2 className="text-2xl font-bold text-gray-900">Small Wins Tracker</h2>
++        {wins.length > 0 && (
++          <div className="flex items-center gap-1 px-3 py-1 rounded-full bg-mint-50 border border-mint-200">
++            <Trophy className="w-3 h-3 text-mint-600" />
++            <span className="text-sm font-semibold text-mint-700">{wins.length}</span>
+           </div>
+-        ))}
++        )}
+       </div>
++
++      {loading ? (
++        <div className="space-y-3 mb-6">
++          {[1, 2].map(i => (
++            <div key={i} className="h-14 bg-gray-100 rounded-lg animate-pulse" />
++          ))}
++        </div>
++      ) : wins.length === 0 ? (
++        <div className="text-center py-8 mb-6">
++          <div className="text-4xl mb-3">≡ƒÅå</div>
++          <p className="text-gray-500 text-sm">Celebrate every win ΓÇö big or small!</p>
++          <p className="text-gray-400 text-xs mt-1">Add your first win below.</p>
++        </div>
++      ) : (
++        <div className="space-y-3 mb-6">
++          {wins.map(win => (
++            <div key={win.id} className="flex items-start gap-3 p-4 bg-mint-50 rounded-lg border border-mint-200">
++              <CheckCircle2 className="w-5 h-5 text-mint-600 flex-shrink-0 mt-0.5 fill-mint-600" />
++              <div className="flex-1">
++                <p className="text-gray-900 font-medium">{win.text}</p>
++                <p className="text-xs text-gray-500 mt-0.5">{win.date}</p>
++              </div>
++              <button
++                type="button"
++                onClick={() => onRemove(win)}
++                className="text-gray-400 hover:text-red-500 transition-colors flex-shrink-0"
++                aria-label="Remove win"
++              >
++                <Trash2 className="w-4 h-4" />
++              </button>
++            </div>
++          ))}
++        </div>
++      )}
++
+       <div className="flex gap-2">
+         <input
+           type="text"
+diff --git a/src/components/ui/ChartBar.tsx b/src/components/ui/ChartBar.tsx
+index 778ed5c..f3ab439 100644
+--- a/src/components/ui/ChartBar.tsx
++++ b/src/components/ui/ChartBar.tsx
+@@ -3,16 +3,25 @@ import React from 'react';
+ interface ChartBarProps {
+   height: number;
+   label?: string;
++  /** Tailwind bg class for the bar color, e.g. 'bg-emerald-400'. Defaults to mint-sky gradient. */
++  colorClass?: string;
++  /** Raw stress score (1ΓÇô5) shown on hover */
++  score?: number;
+ }
+ 
+-export const ChartBar: React.FC<ChartBarProps> = ({ height, label }) => (
+-  <div className="flex-1 flex flex-col items-center gap-2">
++export const ChartBar: React.FC<ChartBarProps> = ({ height, label, colorClass, score }) => (
++  <div className="flex-1 flex flex-col items-center gap-2 group relative">
+     <div className="w-full flex flex-col items-center">
+       <div
+-        className="w-full rounded-t-lg bg-gradient-to-t from-mint-500 to-sky-500 transition-all duration-300 hover:shadow-soft"
++        className={`w-full rounded-t-lg transition-all duration-300 hover:shadow-soft ${colorClass ?? 'bg-gradient-to-t from-mint-500 to-sky-500'}`}
+         style={{ height: `${height}px` }}
+       ></div>
+     </div>
++    {score !== undefined && (
++      <div className="absolute -top-7 left-1/2 -translate-x-1/2 hidden group-hover:block bg-gray-800 text-white text-xs rounded px-2 py-1 whitespace-nowrap z-10 pointer-events-none">
++        {score.toFixed(1)}/5
++      </div>
++    )}
+     {label && <p className="text-xs text-gray-600 font-medium">{label}</p>}
+   </div>
+ );
+diff --git a/src/pages/Admin.tsx b/src/pages/Admin.tsx
+index 797d6f4..6b2ff97 100644
+--- a/src/pages/Admin.tsx
++++ b/src/pages/Admin.tsx
+@@ -1,8 +1,10 @@
+ import { collection, getDocs } from 'firebase/firestore';
+ import { Calendar, Eye, RefreshCw, Search, TrendingUp, Users, X } from 'lucide-react';
+ import { useEffect, useMemo, useState } from 'react';
++import { Link } from 'react-router-dom';
+ import { db } from '../backend/firebase';
+ import { useAuth } from '../context/AuthContext';
++import { ADMIN_UIDS } from '../utils/constants';
+ import {
+   DashboardMetrics,
+   fetchUserScreeningResults,
+@@ -23,14 +25,6 @@ interface UserRecord {
+   lastActive?: any;
+ }
+ 
+-// Admin UIDs - add more UIDs here to grant admin access
+-const ADMIN_UIDS = [
+-  'dNDk5w5QYwOhiEufVHuOsEp6T472',
+-  'vOdYfb2pbcQjED7APCgsieoLHiE2',
+-  'CuoEClKLcWfWgdxfPV5HHvsyfmv1',
+-  'GwtOxqRTf0aoD5FOOHvY3R55hCa2',
+-];
+-
+ interface UserStats {
+   screeningCount: number;
+   journalCount: number;
+@@ -68,7 +62,7 @@ export default function Admin() {
+     }
+   };
+ 
+-useEffect(() => {
++  useEffect(() => {
+     if (!user) return;
+     if (!ADMIN_UIDS.includes(user.uid)) {
+       setLoading(false);
+@@ -127,9 +121,8 @@ useEffect(() => {
+       return lastActive > weekAgo;
+     }).length;
+ 
+-    // Calculate total screenings (would need to fetch all screening results)
+-    // For now, we'll show a placeholder
+-    const totalScreenings = 0; // This would require counting all subcollections
++    // totalScreenings requires a Firestore collectionGroup query ΓÇö show N/A
++    const totalScreenings = 'ΓÇô';
+ 
+     return {
+       totalUsers,
+@@ -177,18 +170,34 @@ useEffect(() => {
+     );
+   }
+ 
+-if (!ADMIN_UIDS.includes(user.uid)) {
++  if (!ADMIN_UIDS.includes(user.uid)) {
+     return (
+-      <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
+-        <p className="p-8 text-center text-red-600">You are not authorized to view this page.</p>
++      <div className="min-h-screen flex items-center justify-center px-4">
++        <div className="bg-white rounded-2xl p-10 shadow-softXl border border-red-100 max-w-sm w-full text-center">
++          <div className="text-5xl mb-4">≡ƒöÉ</div>
++          <h2 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h2>
++          <p className="text-gray-600 mb-6">You don't have permission to view this page.</p>
++          <Link
++            to="/"
++            className="inline-block px-6 py-3 rounded-xl bg-gradient-to-r from-mint-500 to-sky-500 text-white font-semibold hover:shadow-softLg transition-all"
++          >
++            Go Home
++          </Link>
++        </div>
+       </div>
+     );
+   }
+ 
+   if (loading) {
+     return (
+-      <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
+-        <p className="p-8 text-center text-gray-600">Loading...</p>
++      <div className="min-h-screen flex items-center justify-center">
++        <div className="flex items-center gap-3 text-gray-500">
++          <svg className="animate-spin w-6 h-6" viewBox="0 0 24 24" fill="none">
++            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
++            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
++          </svg>
++          <span>Loading admin dataΓÇª</span>
++        </div>
+       </div>
+     );
+   }
+diff --git a/src/pages/Community.tsx b/src/pages/Community.tsx
+index ea38ae9..4586624 100644
+--- a/src/pages/Community.tsx
++++ b/src/pages/Community.tsx
+@@ -3,9 +3,18 @@ import { Edit2, Heart, MessageCircle, Shield, Trash2, Users, X } from 'lucide-re
+ import { useEffect, useState } from 'react';
+ import { useAuth } from '../context/AuthContext';
+ import { useToast } from '../context/ToastContext';
+-import { CommunityStory, deleteStory, fetchStories, postStory, updateStory } from '../services/communityService';
++import {
++  CommunityStory,
++  deleteStory,
++  fetchStories,
++  postStory,
++  reactToStory,
++  unreactToStory,
++  updateStory,
++} from '../services/communityService';
+ 
+ const PAGE_SIZE = 10;
++const MAX_EXCERPT_LENGTH = 500;
+ 
+ export default function Community() {
+   const [stories, setStories] = useState<CommunityStory[]>([]);
+@@ -17,6 +26,8 @@ export default function Community() {
+   const [newExcerpt, setNewExcerpt] = useState('');
+   const [editingStory, setEditingStory] = useState<CommunityStory | null>(null);
+   const [submitting, setSubmitting] = useState(false);
++  // Track which story IDs the current user has already reacted to (session-level)
++  const [reactedIds, setReactedIds] = useState<Set<string>>(new Set());
+   const { showToast } = useToast();
+   const { user, userProfile } = useAuth();
+ 
+@@ -93,12 +104,9 @@ export default function Community() {
+     setSubmitting(true);
+     try {
+       await updateStory(editingStory.id!, newExcerpt.trim());
+-      
+-      // Refresh stories
+       const { stories: fetched, nextCursor: cursor } = await fetchStories(PAGE_SIZE);
+       setStories(fetched);
+       setNextCursor(cursor);
+-      
+       setEditingStory(null);
+       setNewExcerpt('');
+       showToast('Your story has been updated.');
+@@ -115,12 +123,9 @@ export default function Community() {
+     if (!confirm('Are you sure you want to delete this story?')) return;
+     try {
+       await deleteStory(storyId);
+-      
+-      // Refresh stories
+       const { stories: fetched, nextCursor: cursor } = await fetchStories(PAGE_SIZE);
+       setStories(fetched);
+       setNextCursor(cursor);
+-      
+       showToast('Your story has been deleted.');
+     } catch (e) {
+       console.error('Failed to delete story', e);
+@@ -128,11 +133,51 @@ export default function Community() {
+     }
+   };
+ 
+-  // Check if a story belongs to the current user
+-  const isOwnStory = (story: CommunityStory) => {
+-    return user && story.authorId === user.uid;
++  // Handle heart reaction (toggleable) with optimistic UI update
++  const handleReact = async (story: CommunityStory) => {
++    if (!story.id) return;
++    const alreadyReacted = reactedIds.has(story.id);
++
++    // Optimistic UI update
++    setStories(prev =>
++      prev.map(s =>
++        s.id === story.id
++          ? { ...s, reactions: Math.max(0, s.reactions + (alreadyReacted ? -1 : 1)) }
++          : s
++      )
++    );
++    setReactedIds(prev => {
++      const next = new Set(prev);
++      alreadyReacted ? next.delete(story.id!) : next.add(story.id!);
++      return next;
++    });
++
++    try {
++      if (alreadyReacted) {
++        await unreactToStory(story.id);
++      } else {
++        await reactToStory(story.id);
++      }
++    } catch (e) {
++      // Revert on error
++      setStories(prev =>
++        prev.map(s =>
++          s.id === story.id
++            ? { ...s, reactions: Math.max(0, s.reactions + (alreadyReacted ? 1 : -1)) }
++            : s
++        )
++      );
++      setReactedIds(prev => {
++        const next = new Set(prev);
++        alreadyReacted ? next.add(story.id!) : next.delete(story.id!);
++        return next;
++      });
++      showToast('Could not update reaction. Try again.', 'error');
++    }
+   };
+ 
++  const isOwnStory = (story: CommunityStory) => user && story.authorId === user.uid;
++
+   return (
+     <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
+       <div className="max-w-7xl mx-auto">
+@@ -164,7 +209,6 @@ export default function Community() {
+                 <h3 className="font-bold text-gray-900 mb-2">Emotional Safety First</h3>
+                 <p className="text-gray-700">
+                   Every story shared here is treated with care. Our community operates under strict guidelines of respect, compassion, and confidentiality.
+-                  All members are verified, and any harmful behavior is addressed immediately.
+                 </p>
+                 <p className="text-gray-700 mt-3">
+                   <strong>Your privacy is protected:</strong> All stories are posted anonymously. Your identity is safe with us.
+@@ -176,15 +220,15 @@ export default function Community() {
+ 
+         {/* Action Buttons */}
+         <section className="mb-8 flex flex-wrap gap-4">
+-          <button 
+-            onClick={() => setShowSubmit(true)} 
++          <button
++            onClick={() => setShowSubmit(true)}
+             className="px-6 py-2 rounded-lg bg-gradient-to-r from-mint-500 to-sky-500 text-white font-semibold hover:shadow-softLg transition-all"
+           >
+             Share Your Story
+           </button>
+           {user && userStories.length > 0 && (
+-            <button 
+-              onClick={() => setShowUserStories(!showUserStories)} 
++            <button
++              onClick={() => setShowUserStories(!showUserStories)}
+               className="px-6 py-2 rounded-lg bg-white border-2 border-mint-500 text-mint-600 font-semibold hover:bg-mint-50 transition-all"
+             >
+               {showUserStories ? 'Hide My Stories' : 'View My Stories'}
+@@ -202,18 +246,17 @@ export default function Community() {
+                   key={story.id}
+                   className="bg-white rounded-2xl p-6 shadow-soft hover:shadow-softLg transition-all duration-300 relative"
+                 >
+-                  {/* Edit/Delete buttons */}
+                   <div className="absolute top-4 right-4 flex gap-2">
+-                    <button 
++                    <button
+                       onClick={() => { setEditingStory(story); setNewExcerpt(story.excerpt); }}
+-                      className="p-2 text-gray-400 hover:text-mint-600 transition-colors"
++                      className="p-2 text-gray-400 hover:text-mint-600 transition-colors rounded-lg hover:bg-mint-50"
+                       title="Edit"
+                     >
+                       <Edit2 className="w-4 h-4" />
+                     </button>
+-                    <button 
++                    <button
+                       onClick={() => handleDeleteStory(story.id!)}
+-                      className="p-2 text-gray-400 hover:text-red-500 transition-colors"
++                      className="p-2 text-gray-400 hover:text-red-500 transition-colors rounded-lg hover:bg-red-50"
+                       title="Delete"
+                     >
+                       <Trash2 className="w-4 h-4" />
+@@ -243,15 +286,15 @@ export default function Community() {
+         {/* Submit Story Modal */}
+         {showSubmit && (
+           <div
+-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
++            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+             role="dialog"
+             aria-modal="true"
+             onClick={(e) => e.target === e.currentTarget && (setShowSubmit(false), setNewExcerpt(''))}
+           >
+-            <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-softLg" onClick={e => e.stopPropagation()}>
++            <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-softLg animate-slideUp" onClick={e => e.stopPropagation()}>
+               <div className="flex justify-between items-center mb-4">
+                 <h3 className="text-xl font-bold">Share Your Story</h3>
+-                <button onClick={() => { setShowSubmit(false); setNewExcerpt(''); }} className="text-gray-400 hover:text-gray-600">
++                <button onClick={() => { setShowSubmit(false); setNewExcerpt(''); }} className="p-1 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100">
+                   <X className="w-5 h-5" />
+                 </button>
+               </div>
+@@ -259,14 +302,15 @@ export default function Community() {
+               <textarea
+                 className="w-full h-32 p-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-mint-500"
+                 value={newExcerpt}
+-                onChange={e => setNewExcerpt(e.target.value)}
++                onChange={e => setNewExcerpt(e.target.value.slice(0, MAX_EXCERPT_LENGTH))}
+                 placeholder="Write something you'd like to share..."
+               />
++              <p className="text-xs text-gray-400 mt-1 text-right">{newExcerpt.length}/{MAX_EXCERPT_LENGTH}</p>
+               <div className="mt-4 flex justify-end gap-2">
+                 <button
+                   type="button"
+                   onClick={() => { setShowSubmit(false); setNewExcerpt(''); }}
+-                  className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200"
++                  className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 font-medium"
+                 >
+                   Cancel
+                 </button>
+@@ -274,7 +318,7 @@ export default function Community() {
+                   type="button"
+                   disabled={submitting || !newExcerpt.trim()}
+                   onClick={handlePostStory}
+-                  className="px-4 py-2 rounded-lg bg-mint-500 text-white hover:bg-mint-600 disabled:opacity-60"
++                  className="px-4 py-2 rounded-lg bg-mint-500 text-white hover:bg-mint-600 disabled:opacity-60 font-medium"
+                 >
+                   {submitting ? 'SharingΓÇª' : 'Submit'}
+                 </button>
+@@ -286,29 +330,30 @@ export default function Community() {
+         {/* Edit Story Modal */}
+         {editingStory && (
+           <div
+-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
++            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+             role="dialog"
+             aria-modal="true"
+             onClick={(e) => e.target === e.currentTarget && (setEditingStory(null), setNewExcerpt(''))}
+           >
+-            <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-softLg" onClick={e => e.stopPropagation()}>
++            <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-softLg animate-slideUp" onClick={e => e.stopPropagation()}>
+               <div className="flex justify-between items-center mb-4">
+                 <h3 className="text-xl font-bold">Edit Your Story</h3>
+-                <button onClick={() => { setEditingStory(null); setNewExcerpt(''); }} className="text-gray-400 hover:text-gray-600">
++                <button onClick={() => { setEditingStory(null); setNewExcerpt(''); }} className="p-1 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100">
+                   <X className="w-5 h-5" />
+                 </button>
+               </div>
+               <textarea
+                 className="w-full h-32 p-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-mint-500"
+                 value={newExcerpt}
+-                onChange={e => setNewExcerpt(e.target.value)}
++                onChange={e => setNewExcerpt(e.target.value.slice(0, MAX_EXCERPT_LENGTH))}
+                 placeholder="Write something you'd like to share..."
+               />
++              <p className="text-xs text-gray-400 mt-1 text-right">{newExcerpt.length}/{MAX_EXCERPT_LENGTH}</p>
+               <div className="mt-4 flex justify-end gap-2">
+                 <button
+                   type="button"
+                   onClick={() => { setEditingStory(null); setNewExcerpt(''); }}
+-                  className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200"
++                  className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 font-medium"
+                 >
+                   Cancel
+                 </button>
+@@ -316,7 +361,7 @@ export default function Community() {
+                   type="button"
+                   disabled={submitting || !newExcerpt.trim()}
+                   onClick={handleEditStory}
+-                  className="px-4 py-2 rounded-lg bg-mint-500 text-white hover:bg-mint-600 disabled:opacity-60"
++                  className="px-4 py-2 rounded-lg bg-mint-500 text-white hover:bg-mint-600 disabled:opacity-60 font-medium"
+                 >
+                   {submitting ? 'SavingΓÇª' : 'Save Changes'}
+                 </button>
+@@ -332,33 +377,62 @@ export default function Community() {
+ 
+           <div className="grid md:grid-cols-2 gap-6">
+             {loadingStories ? (
+-            <p className="text-center text-gray-500 col-span-2">Loading storiesΓÇª</p>
+-          ) : stories.length === 0 ? (
+-            <p className="text-center text-gray-500 col-span-2">No stories yet. Be the first to share!</p>
+-          ) : (
+-            stories.map(story => (
+-              <div
+-                key={story.id}
+-                className="bg-white rounded-2xl p-6 shadow-soft hover:shadow-softLg transition-all duration-300 cursor-pointer group"
+-              >
+-                <p className="text-gray-700 mb-4 line-clamp-4">{story.excerpt}</p>
+-                <div className="flex items-center justify-between text-sm text-gray-600 mb-4 pb-4 border-b border-gray-200">
+-                  <span>Anonymous</span>
+-                  <span>{story.createdAt?.toDate ? story.createdAt.toDate().toLocaleDateString() : 'Recently'}</span>
+-                </div>
+-                <div className="flex gap-4">
+-                  <button className="flex items-center gap-2 text-gray-600 hover:text-mint-600 transition-colors group-hover:translate-x-0.5">
+-                    <Heart className="w-4 h-4" />
+-                    <span className="text-xs">{story.reactions}</span>
+-                  </button>
+-                  <button className="flex items-center gap-2 text-gray-600 hover:text-sky-600 transition-colors group-hover:translate-x-0.5">
+-                    <MessageCircle className="w-4 h-4" />
+-                    <span className="text-xs">{story.comments}</span>
+-                  </button>
++              // Loading skeletons
++              Array.from({ length: 4 }).map((_, i) => (
++                <div key={i} className="bg-white rounded-2xl p-6 shadow-soft animate-pulse">
++                  <div className="h-4 bg-gray-200 rounded w-full mb-2" />
++                  <div className="h-4 bg-gray-200 rounded w-3/4 mb-2" />
++                  <div className="h-4 bg-gray-200 rounded w-1/2 mb-6" />
++                  <div className="h-3 bg-gray-100 rounded w-1/3" />
+                 </div>
++              ))
++            ) : stories.length === 0 ? (
++              <div className="col-span-2 text-center py-16">
++                <div className="text-6xl mb-4">≡ƒÆ¼</div>
++                <h3 className="text-xl font-semibold text-gray-900 mb-2">No stories yet</h3>
++                <p className="text-gray-500 mb-6">Be the first to share your story with the community.</p>
++                <button
++                  onClick={() => setShowSubmit(true)}
++                  className="px-6 py-3 rounded-lg bg-gradient-to-r from-mint-500 to-sky-500 text-white font-semibold hover:shadow-softLg transition-all"
++                >
++                  Share Your Story
++                </button>
+               </div>
+-            ))
+-          )}
++            ) : (
++              stories.map(story => (
++                <div
++                  key={story.id}
++                  className="bg-white rounded-2xl p-6 shadow-soft hover:shadow-softLg transition-all duration-300 group"
++                >
++                  <p className="text-gray-700 mb-4 line-clamp-4">{story.excerpt}</p>
++                  <div className="flex items-center justify-between text-sm text-gray-600 mb-4 pb-4 border-b border-gray-200">
++                    <span className="font-medium text-gray-500">Anonymous</span>
++                    <span>{story.createdAt?.toDate ? story.createdAt.toDate().toLocaleDateString() : 'Recently'}</span>
++                  </div>
++                  <div className="flex gap-4 items-center">
++                    <button
++                      onClick={() => handleReact(story)}
++                      className={`flex items-center gap-2 transition-all px-3 py-1.5 rounded-lg font-medium text-sm ${
++                        reactedIds.has(story.id!)
++                          ? 'bg-rose-50 text-rose-500 hover:bg-rose-100'
++                          : 'text-gray-500 hover:bg-gray-100 hover:text-rose-500'
++                      }`}
++                      title={reactedIds.has(story.id!) ? 'Remove reaction' : 'React with heart'}
++                    >
++                      <Heart className={`w-4 h-4 ${reactedIds.has(story.id!) ? 'fill-rose-500' : ''}`} />
++                      <span>{story.reactions}</span>
++                    </button>
++                    <button className="flex items-center gap-2 text-gray-500 hover:text-sky-600 transition-colors px-3 py-1.5 rounded-lg hover:bg-sky-50 text-sm">
++                      <MessageCircle className="w-4 h-4" />
++                      <span>{story.comments}</span>
++                    </button>
++                    {isOwnStory(story) && (
++                      <span className="ml-auto text-xs text-mint-600 font-medium bg-mint-50 px-2 py-1 rounded">Your story</span>
++                    )}
++                  </div>
++                </div>
++              ))
++            )}
+           </div>
+ 
+           <div className="mt-12 text-center">
+@@ -380,7 +454,7 @@ export default function Community() {
+               }}
+               className="px-8 py-3 rounded-lg border-2 border-mint-500 text-mint-600 font-semibold hover:bg-mint-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+             >
+-              {loadingMore ? 'LoadingΓÇª' : 'Load More Stories'}
++              {loadingMore ? 'LoadingΓÇª' : nextCursor ? 'Load More Stories' : 'All stories loaded'}
+             </button>
+           </div>
+         </section>
+@@ -389,32 +463,14 @@ export default function Community() {
+           <h2 className="text-2xl font-bold text-gray-900 mb-6">Community Guidelines</h2>
+           <div className="grid md:grid-cols-2 gap-6">
+             {[
+-              {
+-                title: 'Be Kind',
+-                description: 'Treat others as you would like to be treated. Compassion is our core value.',
+-              },
+-              {
+-                title: 'Respect Privacy',
+-                description: 'All stories are anonymous. Never try to identify or contact community members.',
+-              },
+-              {
+-                title: 'Stay On Topic',
+-                description: 'Keep conversations focused on mental health and emotional wellbeing.',
+-              },
+-              {
+-                title: 'No Judgment',
+-                description: 'Mental health struggles look different for everyone. All experiences are valid.',
+-              },
+-              {
+-                title: 'Crisis Support',
+-                description: 'If someone shares they\'re in crisis, encourage them to reach out for professional help.',
+-              },
+-              {
+-                title: 'Moderation',
+-                description: 'Our team moderates 24/7 to ensure a safe environment for everyone.',
+-              },
++              { title: 'Be Kind', description: 'Treat others as you would like to be treated. Compassion is our core value.' },
++              { title: 'Respect Privacy', description: 'All stories are anonymous. Never try to identify or contact community members.' },
++              { title: 'Stay On Topic', description: 'Keep conversations focused on mental health and emotional wellbeing.' },
++              { title: 'No Judgment', description: 'Mental health struggles look different for everyone. All experiences are valid.' },
++              { title: 'Crisis Support', description: "If someone shares they're in crisis, encourage them to reach out for professional help." },
++              { title: 'Moderation', description: 'Our team moderates 24/7 to ensure a safe environment for everyone.' },
+             ].map((guideline, idx) => (
+-              <div key={idx} className="bg-white rounded-lg p-4">
++              <div key={idx} className="bg-white rounded-lg p-4 hover:shadow-soft transition-all">
+                 <h3 className="font-semibold text-gray-900 mb-2">{guideline.title}</h3>
+                 <p className="text-gray-600 text-sm">{guideline.description}</p>
+               </div>
+@@ -432,9 +488,7 @@ export default function Community() {
+               className="px-6 py-3 rounded-lg bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200 transition-colors"
+               onClick={() => {
+                 const el = document.getElementById('community-stories');
+-                if (el) {
+-                  el.scrollIntoView({ behavior: 'smooth' });
+-                }
++                if (el) el.scrollIntoView({ behavior: 'smooth' });
+               }}
+             >
+               Explore Stories
+diff --git a/src/pages/EmotionalCare.tsx b/src/pages/EmotionalCare.tsx
+index 09b89e4..163acab 100644
+--- a/src/pages/EmotionalCare.tsx
++++ b/src/pages/EmotionalCare.tsx
+@@ -1,14 +1,17 @@
+ import { CheckCircle, Heart, Leaf, MessageCircle, Play, RefreshCw, Wind } from 'lucide-react';
+-import { useEffect, useState } from 'react';
++import { useEffect, useRef, useState } from 'react';
+ import { Link } from 'react-router-dom';
+ 
+ export default function EmotionalCare() {
+   const [selectedMood, setSelectedMood] = useState<string | null>(null);
+   const [activeActivity, setActiveActivity] = useState<string | null>(null);
+   const [currentStep, setCurrentStep] = useState(0);
++  // Ref to current step so the timer interval can always read the latest value
++  const stepRef = useRef(0);
+   const [activityStarted, setActivityStarted] = useState(false);
+   const [activityCompleted, setActivityCompleted] = useState(false);
+   const [timeLeft, setTimeLeft] = useState(0);
++  const activeActivityRef = useRef<string | null>(null);
+ 
+   const moods = [
+     { 
+@@ -127,16 +130,24 @@ export default function EmotionalCare() {
+     },
+   ];
+ 
+-  // Timer effect
++  // Keep refs in sync with state for use inside the timer interval
++  useEffect(() => { stepRef.current = currentStep; }, [currentStep]);
++  useEffect(() => { activeActivityRef.current = activeActivity; }, [activeActivity]);
++
++  // Timer effect - reads from refs to avoid stale closures
+   useEffect(() => {
+     if (!activityStarted || activityCompleted) return;
+ 
+     const timer = setInterval(() => {
+       setTimeLeft(prev => {
+         if (prev <= 1) {
+-          if (currentStep < getActiveActivity()!.steps.length - 1) {
+-            setCurrentStep(prev => prev + 1);
+-            return getActiveActivity()!.steps[Math.min(currentStep + 1, getActiveActivity()!.steps.length - 1)].duration;
++          const act = resetActivities.find(a => a.id === activeActivityRef.current);
++          if (!act) return 0;
++          const step = stepRef.current;
++          if (step < act.steps.length - 1) {
++            const nextStep = step + 1;
++            setCurrentStep(nextStep);
++            return act.steps[nextStep].duration;
+           } else {
+             setActivityCompleted(true);
+             clearInterval(timer);
+@@ -148,7 +159,7 @@ export default function EmotionalCare() {
+     }, 1000);
+ 
+     return () => clearInterval(timer);
+-  }, [activityStarted, currentStep, activityCompleted]);
++  }, [activityStarted, activityCompleted]);
+ 
+   const getActiveActivity = () => {
+     return resetActivities.find(a => a.id === activeActivity);
+@@ -159,6 +170,7 @@ export default function EmotionalCare() {
+     if (activity) {
+       setActivityStarted(true);
+       setCurrentStep(0);
++      stepRef.current = 0;
+       setTimeLeft(activity.steps[0].duration);
+     }
+   };
+@@ -173,9 +185,11 @@ export default function EmotionalCare() {
+ 
+   const finishActivity = () => {
+     setActiveActivity(null);
++    activeActivityRef.current = null;
+     setActivityStarted(false);
+     setActivityCompleted(false);
+     setCurrentStep(0);
++    stepRef.current = 0;
+     setTimeLeft(0);
+   };
+ 
+diff --git a/src/pages/Home.tsx b/src/pages/Home.tsx
+index aac304e..c3381fd 100644
+--- a/src/pages/Home.tsx
++++ b/src/pages/Home.tsx
+@@ -7,41 +7,63 @@ export default function Home() {
+ 
+   return (
+     <div className="min-h-screen">
+-      <section className="relative overflow-hidden pt-20 pb-32 px-4 sm:px-6 lg:px-8">
+-        <div className="absolute inset-0 bg-gradient-to-b from-mint-50 via-sky-50 to-transparent"></div>
++      <section className="relative overflow-hidden pt-24 pb-36 px-4 sm:px-6 lg:px-8">
++        {/* Vibrant gradient background */}
++        <div className="absolute inset-0 bg-gradient-to-br from-mint-100 via-sky-100 to-lavender-100" />
++        {/* Decorative blobs */}
++        <div className="absolute top-0 right-0 w-96 h-96 bg-mint-200 rounded-full mix-blend-multiply filter blur-3xl opacity-50 animate-pulse" />
++        <div className="absolute bottom-0 left-0 w-96 h-96 bg-sky-200 rounded-full mix-blend-multiply filter blur-3xl opacity-50 animate-pulse" style={{ animationDelay: '1.5s' }} />
++        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-lavender-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse" style={{ animationDelay: '0.7s' }} />
++
+         <div className="relative max-w-7xl mx-auto text-center">
+           {userProfile?.name && (
+-            <p className="text-lg text-mint-600 font-semibold mb-4 animate-slideUp">Welcome back, {userProfile.name}! ≡ƒæï</p>
++            <div className="inline-flex items-center gap-2 mb-4 px-4 py-2 bg-white/70 backdrop-blur-sm rounded-full border border-mint-200 shadow-soft animate-slideUp">
++              <span className="text-lg">≡ƒæï</span>
++              <p className="text-mint-700 font-semibold text-sm">Welcome back, {userProfile.name}!</p>
++            </div>
+           )}
+-          <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6 animate-slideUp">
+-            Your mental wellbeing <span className="bg-gradient-to-r from-mint-600 to-sky-600 bg-clip-text text-transparent">matters.</span>
++          <h1 className="text-5xl md:text-7xl font-bold text-gray-900 mb-6 animate-slideUp leading-tight">
++            Your mental wellbeing{' '}
++            <span className="bg-gradient-to-r from-mint-600 to-sky-600 bg-clip-text text-transparent">
++              matters.
++            </span>
+           </h1>
+-          <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto animate-slideUp">
++          <p className="text-xl text-gray-600 mb-10 max-w-2xl mx-auto animate-slideUp leading-relaxed">
+             A safe space to check in with yourself, understand your emotions, and take gentle steps forward. You're never alone.
+           </p>
+           <div className="flex flex-col sm:flex-row gap-4 justify-center animate-slideUp">
+             <Link
+               to="/screening"
+-              className="px-8 py-3 rounded-lg bg-gradient-to-r from-mint-500 to-mint-600 text-white font-semibold hover:shadow-softLg transition-all duration-200 hover:scale-105"
++              className="px-8 py-4 rounded-xl bg-gradient-to-r from-mint-500 to-sky-500 text-white font-semibold hover:shadow-softLg transition-all duration-200 hover:scale-105 text-lg"
+             >
+-              Take Screening
++              Take Mental Screening
+             </Link>
+             <Link
+               to="/emotional-care"
+-              className="px-8 py-3 rounded-lg bg-sky-100 text-sky-700 font-semibold hover:bg-sky-200 transition-all duration-200"
++              className="px-8 py-4 rounded-xl bg-white/80 backdrop-blur-sm text-sky-700 font-semibold border-2 border-sky-200 hover:bg-white hover:shadow-soft transition-all duration-200 text-lg"
+             >
+               Start Emotional Check-In
+             </Link>
+-            <Link
+-              to="/dashboard"
+-              className="px-8 py-3 rounded-lg bg-mint-100 text-mint-700 font-semibold hover:bg-mint-200 transition-all duration-200"
+-            >
+-              View Dashboard
+-            </Link>
++          </div>
++          {/* Stats pill */}
++          <div className="mt-12 flex flex-wrap items-center justify-center gap-6 text-sm text-gray-500 animate-slideUp">
++            <div className="flex items-center gap-2 bg-white/70 backdrop-blur-sm px-4 py-2 rounded-full border border-mint-100 shadow-soft">
++              <span className="text-xl">≡ƒî┐</span>
++              <span className="font-medium">Free & Secure</span>
++            </div>
++            <div className="flex items-center gap-2 bg-white/70 backdrop-blur-sm px-4 py-2 rounded-full border border-sky-100 shadow-soft">
++              <span className="text-xl">≡ƒöÆ</span>
++              <span className="font-medium">100% Private</span>
++            </div>
++            <div className="flex items-center gap-2 bg-white/70 backdrop-blur-sm px-4 py-2 rounded-full border border-lavender-100 shadow-soft">
++              <span className="text-xl">≡ƒÆ¬</span>
++              <span className="font-medium">Evidence-Based</span>
++            </div>
+           </div>
+         </div>
+       </section>
+ 
++
+       <section className="py-16 px-4 sm:px-6 lg:px-8 bg-white/40">
+         <div className="max-w-7xl mx-auto">
+           <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">How MindScan+ Helps You</h2>
+diff --git a/src/pages/Login.tsx b/src/pages/Login.tsx
+index 9765aa4..0856705 100644
+--- a/src/pages/Login.tsx
++++ b/src/pages/Login.tsx
+@@ -1,237 +1,339 @@
+-import { Eye, EyeOff, Lock, Mail, User } from 'lucide-react';
++import { Eye, EyeOff, Heart, Lock, Mail, User } from 'lucide-react';
+ import { useEffect, useState } from 'react';
+ import { useNavigate } from 'react-router-dom';
+-import { Button } from '../components/ui/Button';
+-import { Card } from '../components/ui/Card';
+ import { useAuth } from '../context/AuthContext';
+ import { useToast } from '../context/ToastContext';
+ import * as authService from '../services/authService';
+ import { ensureUserProfile, updateUserName } from '../services/userService';
+ 
+ export default function Login() {
+-    const [email, setEmail] = useState('');
+-    const [password, setPassword] = useState('');
+-    const [confirmPassword, setConfirmPassword] = useState('');
+-    const [name, setName] = useState('');
+-    const [error, setError] = useState('');
+-    const [isSignup, setIsSignup] = useState(false);
+-    const [showPassword, setShowPassword] = useState(false);
+-    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+-    const [showGoogleNameModal, setShowGoogleNameModal] = useState(false);
+-    const [googleNameInput, setGoogleNameInput] = useState('');
+-    const [googleUserData, setGoogleUserData] = useState<any>(null);
+-
+-    const navigate = useNavigate();
+-    const { user } = useAuth();
+-    const { showToast } = useToast();
+-
+-    useEffect(() => {
+-        if (user) navigate('/', { replace: true });
+-    }, [user, navigate]);
+-
+-    const handleSubmit = async (e: React.FormEvent) => {
+-        e.preventDefault();
+-        setError('');
+-
+-        try {
+-            if (isSignup) {
+-                if (!name.trim()) {
+-                    setError('Name is required');
+-                    return;
+-                }
+-                if (password.length < 6) {
+-                    setError('Password must be at least 6 characters');
+-                    return;
+-                }
+-                if (password !== confirmPassword) {
+-                    setError('Passwords do not match');
+-                    return;
+-                }
+-                const newUser = await authService.registerWithEmail(email, password);
+-                if (newUser) {
+-                    await ensureUserProfile(newUser);
+-                }
+-            } else {
+-                await authService.loginWithEmail(email, password);
+-            }
+-            showToast(isSignup ? 'Account created. Welcome!' : 'Signed in successfully.');
+-            navigate('/');
+-        } catch (err: any) {
+-            console.error(err);
+-            setError(err.message || 'Something went wrong');
++  const [email, setEmail] = useState('');
++  const [password, setPassword] = useState('');
++  const [confirmPassword, setConfirmPassword] = useState('');
++  const [name, setName] = useState('');
++  const [error, setError] = useState('');
++  const [isSignup, setIsSignup] = useState(false);
++  const [loading, setLoading] = useState(false);
++  const [showPassword, setShowPassword] = useState(false);
++  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
++  const [showGoogleNameModal, setShowGoogleNameModal] = useState(false);
++  const [googleNameInput, setGoogleNameInput] = useState('');
++  const [googleUserData, setGoogleUserData] = useState<any>(null);
++
++  const navigate = useNavigate();
++  const { user } = useAuth();
++  const { showToast } = useToast();
++
++  useEffect(() => {
++    if (user) navigate('/', { replace: true });
++  }, [user, navigate]);
++
++  const handleSubmit = async (e: React.FormEvent) => {
++    e.preventDefault();
++    setError('');
++    setLoading(true);
++
++    try {
++      if (isSignup) {
++        if (!name.trim()) {
++          setError('Name is required');
++          setLoading(false);
++          return;
+         }
+-    };
+-
+-    const handleGoogle = async () => {
+-        setError('');
+-        try {
+-            const user = await authService.loginWithGoogle();
+-            if (user) {
+-                // ensure profile created by service already, but we still prompt for name if missing
+-                if (!user.displayName) {
+-                    setGoogleUserData(user);
+-                    setGoogleNameInput('');
+-                    setShowGoogleNameModal(true);
+-                } else {
+-                    showToast('Signed in with Google.');
+-                    navigate('/');
+-                }
+-            }
+-        } catch (err: any) {
+-            console.error(err);
+-            setError(err.message || 'Google sign-in failed');
++        if (password.length < 6) {
++          setError('Password must be at least 6 characters');
++          setLoading(false);
++          return;
+         }
+-    };
+-
+-    const handleGoogleNameSubmit = async (e: React.FormEvent) => {
+-        e.preventDefault();
+-        if (!googleNameInput.trim()) {
+-            setError('Name is required');
+-            return;
++        if (password !== confirmPassword) {
++          setError('Passwords do not match');
++          setLoading(false);
++          return;
+         }
+-        try {
+-            if (googleUserData) {
+-                await updateUserName(googleUserData.uid, googleNameInput.trim());
+-            }
+-            setShowGoogleNameModal(false);
+-            setGoogleUserData(null);
+-            setGoogleNameInput('');
+-            showToast('Profile updated. Welcome!');
+-            navigate('/');
+-        } catch (err: any) {
+-            console.error(err);
+-            setError('Failed to save name');
++        // FIX: pass name as third argument so it gets saved to Firestore
++        await authService.registerWithEmail(email, password, name.trim());
++      } else {
++        await authService.loginWithEmail(email, password);
++      }
++      showToast(isSignup ? 'Account created. Welcome!' : 'Signed in successfully.');
++      navigate('/');
++    } catch (err: any) {
++      console.error(err);
++      const msg = err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password'
++        ? 'Invalid email or password.'
++        : err.code === 'auth/email-already-in-use'
++        ? 'An account with this email already exists.'
++        : err.message || 'Something went wrong. Please try again.';
++      setError(msg);
++    } finally {
++      setLoading(false);
++    }
++  };
++
++  const handleGoogle = async () => {
++    setError('');
++    setLoading(true);
++    try {
++      // FIX: correctly destructure { user } from return value
++      const result = await authService.loginWithGoogle();
++      const googleUser = result?.user;
++      if (googleUser) {
++        if (!googleUser.displayName) {
++          setGoogleUserData(googleUser);
++          setGoogleNameInput('');
++          setShowGoogleNameModal(true);
++        } else {
++          showToast('Signed in with Google.');
++          navigate('/');
+         }
+-    };
+-
+-    return (
+-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-mint-50 via-sky-50 to-white">
+-            <Card className="max-w-md w-full shadow-lg">
+-                <h2 className="text-3xl font-bold text-center mb-6">
+-                    {isSignup ? 'Create an account' : 'Sign in to your account'}
+-                </h2>
+-                <form onSubmit={handleSubmit} className="space-y-4">
+-                    {isSignup && (
+-                        <div className="flex items-center border rounded-lg px-3 py-2">
+-                            <User className="w-5 h-5 text-gray-500 mr-2" />
+-                            <input
+-                                type="text"
+-                                value={name}
+-                                onChange={e => setName(e.target.value)}
+-                                required
+-                                placeholder="Full Name"
+-                                className="w-full outline-none"
+-                            />
+-                        </div>
+-                    )}
+-                    <div className="flex items-center border rounded-lg px-3 py-2">
+-                        <Mail className="w-5 h-5 text-gray-500 mr-2" />
+-                        <input
+-                            type="email"
+-                            value={email}
+-                            onChange={e => setEmail(e.target.value)}
+-                            required
+-                            placeholder="Email"
+-                            className="w-full outline-none"
+-                        />
+-                    </div>
+-
+-                    <div className="flex items-center border rounded-lg px-3 py-2">
+-                        <Lock className="w-5 h-5 text-gray-500 mr-2" />
+-                        <input
+-                            type={showPassword ? 'text' : 'password'}
+-                            value={password}
+-                            onChange={e => setPassword(e.target.value)}
+-                            required
+-                            placeholder="Password"
+-                            className="w-full outline-none"
+-                        />
+-                        <button
+-                            type="button"
+-                            onClick={() => setShowPassword(!showPassword)}
+-                            className="ml-2 text-gray-500 hover:text-gray-700"
+-                        >
+-                            {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+-                        </button>
+-                    </div>
+-
+-                                {isSignup && (
+-                                    <div className="flex items-center border rounded-lg px-3 py-2">
+-                                        <Lock className="w-5 h-5 text-gray-500 mr-2" />
+-                                        <input
+-                                            type={showConfirmPassword ? 'text' : 'password'}
+-                                            value={confirmPassword}
+-                                            onChange={e => setConfirmPassword(e.target.value)}
+-                                            required
+-                                            placeholder="Re-enter Password"
+-                                            className="w-full outline-none"
+-                                        />
+-                                        <button
+-                                            type="button"
+-                                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+-                                            className="ml-2 text-gray-500 hover:text-gray-700"
+-                                        >
+-                                            {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+-                                        </button>
+-                                    </div>
+-                                )}
+-
+-                    {error && <p className="text-red-500 text-sm">{error}</p>}
+-
+-                    <Button type="submit" className="w-full" variant="primary">
+-                        {isSignup ? 'Sign up' : 'Sign in'}
+-                    </Button>
+-                    <Button
+-                        type="button"
+-                        onClick={handleGoogle}
+-                        className="w-full mt-2 flex items-center justify-center gap-2"
+-                        variant="secondary"
+-                    >
+-                        Continue with Google
+-                    </Button>
+-                </form>
+-
+-                {/* Google Name Modal */}
+-                {showGoogleNameModal && (
+-                    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+-                        <Card className="max-w-md w-full shadow-lg">
+-                            <h3 className="text-2xl font-bold mb-4">Complete Your Profile</h3>
+-                            <p className="text-gray-600 mb-6">Please enter your name to continue</p>
+-                            <form onSubmit={handleGoogleNameSubmit} className="space-y-4">
+-                                <div className="flex items-center border rounded-lg px-3 py-2">
+-                                    <User className="w-5 h-5 text-gray-500 mr-2" />
+-                                    <input
+-                                        type="text"
+-                                        value={googleNameInput}
+-                                        onChange={e => setGoogleNameInput(e.target.value)}
+-                                        autoFocus
+-                                        placeholder="Full Name"
+-                                        className="w-full outline-none"
+-                                    />
+-                                </div>
+-                                {error && <p className="text-red-500 text-sm">{error}</p>}
+-                                <button
+-                                    type="submit"
+-                                    className="w-full px-4 py-2 bg-gradient-to-r from-mint-500 to-mint-600 text-white rounded-lg font-semibold hover:shadow-softLg transition-all"
+-                                >
+-                                    Continue
+-                                </button>
+-                            </form>
+-                        </Card>
+-                    </div>
+-                )}
+-
+-                <p className="text-center text-sm mt-4">
+-                    {isSignup ? 'Already have an account?' : "Don't have an account?"}{' '}
+-                    <button
+-                        type="button"
+-                        className="text-mint-600 font-semibold underline"
+-                        onClick={() => setIsSignup(prev => !prev)}
+-                    >
+-                        {isSignup ? 'Sign in' : 'Sign up'}
+-                    </button>
+-                </p>
+-            </Card>
++      }
++    } catch (err: any) {
++      console.error(err);
++      setError(err.message || 'Google sign-in failed. Please try again.');
++    } finally {
++      setLoading(false);
++    }
++  };
++
++  const handleGoogleNameSubmit = async (e: React.FormEvent) => {
++    e.preventDefault();
++    if (!googleNameInput.trim()) {
++      setError('Name is required');
++      return;
++    }
++    setLoading(true);
++    try {
++      if (googleUserData) {
++        await updateUserName(googleUserData.uid, googleNameInput.trim());
++        await ensureUserProfile(googleUserData, googleNameInput.trim());
++      }
++      setShowGoogleNameModal(false);
++      setGoogleUserData(null);
++      setGoogleNameInput('');
++      showToast('Profile updated. Welcome!');
++      navigate('/');
++    } catch (err: any) {
++      console.error(err);
++      setError('Failed to save name. Please try again.');
++    } finally {
++      setLoading(false);
++    }
++  };
++
++  const inputBase = 'flex items-center gap-3 px-4 py-3 border border-gray-200 rounded-xl bg-white/80 backdrop-blur-sm focus-within:ring-2 focus-within:ring-mint-400 focus-within:border-transparent transition-all duration-200';
++  const inputField = 'flex-1 bg-transparent text-gray-800 placeholder-gray-400 outline-none text-sm font-medium';
++
++  return (
++    <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
++      {/* Animated background */}
++      <div className="absolute inset-0 bg-gradient-to-br from-mint-50 via-sky-50 to-lavender-50" />
++      <div className="absolute top-0 left-0 w-96 h-96 bg-mint-200 rounded-full mix-blend-multiply filter blur-3xl opacity-40 animate-pulse" />
++      <div className="absolute bottom-0 right-0 w-96 h-96 bg-sky-200 rounded-full mix-blend-multiply filter blur-3xl opacity-40 animate-pulse" style={{ animationDelay: '1s' }} />
++      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-lavender-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse" style={{ animationDelay: '0.5s' }} />
++
++      <div className="relative w-full max-w-md mx-4 animate-slideUp">
++        {/* Card */}
++        <div className="bg-white/70 backdrop-blur-xl rounded-3xl shadow-softXl border border-white/80 p-8">
++          {/* Logo */}
++          <div className="flex flex-col items-center mb-8">
++            <div className="p-3 rounded-2xl bg-gradient-to-br from-mint-400 to-sky-400 shadow-softLg mb-3">
++              <Heart className="w-7 h-7 text-white fill-white" />
++            </div>
++            <h1 className="text-2xl font-bold bg-gradient-to-r from-mint-600 to-sky-600 bg-clip-text text-transparent">
++              MindScan+
++            </h1>
++            <p className="text-gray-500 text-sm mt-1">Your mental wellbeing companion</p>
++          </div>
++
++          {/* Tab switcher */}
++          <div className="flex bg-gray-100 rounded-xl p-1 mb-6">
++            <button
++              type="button"
++              onClick={() => { setIsSignup(false); setError(''); }}
++              className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
++                !isSignup ? 'bg-white text-gray-900 shadow-soft' : 'text-gray-500 hover:text-gray-700'
++              }`}
++            >
++              Sign In
++            </button>
++            <button
++              type="button"
++              onClick={() => { setIsSignup(true); setError(''); }}
++              className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
++                isSignup ? 'bg-white text-gray-900 shadow-soft' : 'text-gray-500 hover:text-gray-700'
++              }`}
++            >
++              Sign Up
++            </button>
++          </div>
++
++          <form onSubmit={handleSubmit} className="space-y-3">
++            {isSignup && (
++              <div className={inputBase}>
++                <User className="w-4 h-4 text-gray-400 flex-shrink-0" />
++                <input
++                  type="text"
++                  value={name}
++                  onChange={e => setName(e.target.value)}
++                  required
++                  placeholder="Full Name"
++                  className={inputField}
++                />
++              </div>
++            )}
++
++            <div className={inputBase}>
++              <Mail className="w-4 h-4 text-gray-400 flex-shrink-0" />
++              <input
++                type="email"
++                value={email}
++                onChange={e => setEmail(e.target.value)}
++                required
++                placeholder="Email Address"
++                className={inputField}
++              />
++            </div>
++
++            <div className={inputBase}>
++              <Lock className="w-4 h-4 text-gray-400 flex-shrink-0" />
++              <input
++                type={showPassword ? 'text' : 'password'}
++                value={password}
++                onChange={e => setPassword(e.target.value)}
++                required
++                placeholder="Password"
++                className={inputField}
++              />
++              <button
++                type="button"
++                onClick={() => setShowPassword(!showPassword)}
++                className="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
++              >
++                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
++              </button>
++            </div>
++
++            {isSignup && (
++              <div className={inputBase}>
++                <Lock className="w-4 h-4 text-gray-400 flex-shrink-0" />
++                <input
++                  type={showConfirmPassword ? 'text' : 'password'}
++                  value={confirmPassword}
++                  onChange={e => setConfirmPassword(e.target.value)}
++                  required
++                  placeholder="Confirm Password"
++                  className={inputField}
++                />
++                <button
++                  type="button"
++                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
++                  className="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
++                >
++                  {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
++                </button>
++              </div>
++            )}
++
++            {error && (
++              <div className="p-3 bg-red-50 border border-red-200 rounded-xl">
++                <p className="text-red-600 text-sm font-medium">{error}</p>
++              </div>
++            )}
++
++            <button
++              type="submit"
++              disabled={loading}
++              className="w-full py-3 rounded-xl bg-gradient-to-r from-mint-500 to-sky-500 text-white font-semibold hover:shadow-softLg transition-all duration-200 hover:scale-[1.02] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100 mt-2"
++            >
++              {loading ? (
++                <span className="flex items-center justify-center gap-2">
++                  <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
++                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
++                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
++                  </svg>
++                  {isSignup ? 'Creating AccountΓÇª' : 'Signing InΓÇª'}
++                </span>
++              ) : (
++                isSignup ? 'Create Account' : 'Sign In'
++              )}
++            </button>
++
++            <div className="relative flex items-center gap-3 py-1">
++              <div className="flex-1 h-px bg-gray-200" />
++              <span className="text-xs text-gray-400 font-medium">or</span>
++              <div className="flex-1 h-px bg-gray-200" />
++            </div>
++
++            <button
++              type="button"
++              onClick={handleGoogle}
++              disabled={loading}
++              className="w-full py-3 rounded-xl bg-white border-2 border-gray-200 text-gray-700 font-semibold hover:border-mint-300 hover:bg-mint-50 transition-all duration-200 flex items-center justify-center gap-3 disabled:opacity-60 disabled:cursor-not-allowed"
++            >
++              <svg className="w-5 h-5" viewBox="0 0 24 24">
++                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
++                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
++                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
++                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
++              </svg>
++              Continue with Google
++            </button>
++          </form>
++
++          <p className="text-center text-xs text-gray-500 mt-6">
++            By continuing, you agree to our{' '}
++            <span className="text-mint-600 font-medium cursor-pointer hover:underline">Terms of Service</span>{' '}
++            and{' '}
++            <span className="text-mint-600 font-medium cursor-pointer hover:underline">Privacy Policy</span>.
++          </p>
++        </div>
++
++        <p className="text-center text-sm text-gray-500 mt-4">
++          {isSignup ? 'Already have an account?' : "Don't have an account?"}{' '}
++          <button
++            type="button"
++            className="text-mint-600 font-semibold hover:text-mint-700 transition-colors"
++            onClick={() => { setIsSignup(prev => !prev); setError(''); }}
++          >
++            {isSignup ? 'Sign in' : 'Sign up for free'}
++          </button>
++        </p>
++      </div>
++
++      {/* Google Name Modal */}
++      {showGoogleNameModal && (
++        <div className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-50 p-4">
++          <div className="bg-white rounded-2xl p-8 max-w-sm w-full shadow-softXl animate-slideUp">
++            <div className="flex flex-col items-center mb-6">
++              <div className="text-4xl mb-3">≡ƒæï</div>
++              <h3 className="text-xl font-bold text-gray-900">Complete Your Profile</h3>
++              <p className="text-gray-500 text-sm text-center mt-1">What should we call you?</p>
++            </div>
++            <form onSubmit={handleGoogleNameSubmit} className="space-y-4">
++              <div className={inputBase}>
++                <User className="w-4 h-4 text-gray-400 flex-shrink-0" />
++                <input
++                  type="text"
++                  value={googleNameInput}
++                  onChange={e => setGoogleNameInput(e.target.value)}
++                  autoFocus
++                  placeholder="Your name"
++                  className={inputField}
++                  required
++                />
++              </div>
++              {error && <p className="text-red-500 text-sm">{error}</p>}
++              <button
++                type="submit"
++                disabled={loading}
++                className="w-full py-3 rounded-xl bg-gradient-to-r from-mint-500 to-sky-500 text-white font-semibold hover:shadow-softLg transition-all disabled:opacity-60"
++              >
++                {loading ? 'SavingΓÇª' : 'Continue ΓåÆ'}
++              </button>
++            </form>
++          </div>
+         </div>
+-    );
++      )}
++    </div>
++  );
+ }
+diff --git a/src/pages/Resources.tsx b/src/pages/Resources.tsx
+index 09d5fd9..aa09d67 100644
+--- a/src/pages/Resources.tsx
++++ b/src/pages/Resources.tsx
+@@ -1,299 +1,327 @@
+-import { Phone, Globe, BookOpen, Music, Users, Heart, AlertTriangle } from 'lucide-react';
++import {
++  BookOpen,
++  ExternalLink,
++  Globe,
++  Heart,
++  Music,
++  Phone,
++  PlayCircle,
++  Users,
++} from 'lucide-react';
++import { useState } from 'react';
+ import { Link } from 'react-router-dom';
++import {
++  articles,
++  audioGuides,
++  helplines,
++  professionalServices,
++} from '../services/resourcesData';
+ 
+-export default function Resources() {
+-  const emergencyResources = [
+-    {
+-      name: 'National Crisis Hotline',
+-      phone: '988',
+-      phoneDisplay: '988 (Call or Text)',
+-      description: 'Available 24/7 for immediate support during emotional distress',
+-      icon: Phone,
+-      link: 'tel:988',
+-      linkLabel: 'Call or Text 988',
+-    },
+-    {
+-      name: 'Crisis Text Line',
+-      phone: '741741',
+-      phoneDisplay: 'Text HOME to 741741',
+-      description: 'Text-based crisis support whenever you need it',
+-      icon: Phone,
+-      link: 'https://www.crisistextline.org',
+-      linkLabel: 'Open Crisis Text Line',
+-    },
+-    {
+-      name: 'International Helpline',
+-      phone: '',
+-      phoneDisplay: 'findahelpline.com',
+-      description: 'Find mental health support resources worldwide',
+-      icon: Globe,
+-      link: 'https://findahelpline.com',
+-      linkLabel: 'Find a Helpline',
+-    },
+-  ];
++// ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+ 
+-  const articles = [
+-    {
+-      title: 'Understanding Your Stress Cycle',
+-      category: 'Education',
+-      readTime: '5 min',
+-      excerpt: 'Learn about the three stages of stress and how to recognize when you need support.',
+-    },
+-    {
+-      title: 'Building Resilience: A Step-by-Step Guide',
+-      category: 'Wellness',
+-      readTime: '8 min',
+-      excerpt: 'Discover practical techniques to strengthen your emotional resilience.',
+-    },
+-    {
+-      title: 'The Science Behind Breathing Exercises',
+-      category: 'Research',
+-      readTime: '6 min',
+-      excerpt: 'Understand how simple breathing techniques can calm your nervous system.',
+-    },
+-    {
+-      title: 'Cultivating Self-Compassion',
+-      category: 'Wellness',
+-      readTime: '7 min',
+-      excerpt: 'Learn to speak to yourself with the same kindness you offer others.',
+-    },
+-    {
+-      title: 'Sleep and Mental Health: The Connection',
+-      category: 'Health',
+-      readTime: '6 min',
+-      excerpt: 'Explore how sleep quality impacts your emotional wellbeing.',
+-    },
+-    {
+-      title: 'Breaking the Stigma Around Mental Health',
+-      category: 'Community',
+-      readTime: '9 min',
+-      excerpt: 'Why mental health deserves the same attention as physical health.',
+-    },
+-  ];
++export default function Resources() {
++  const [activeEmbed, setActiveEmbed] = useState<string | null>(null);
++  const [articleFilter, setArticleFilter] = useState<string>('All');
+ 
+-  const audioGuides = [
+-    {
+-      title: '5-Minute Morning Meditation',
+-      duration: '5:23',
+-      category: 'Meditation',
+-      icon: '≡ƒºÿ',
+-    },
+-    {
+-      title: 'Guided Body Scan for Relaxation',
+-      duration: '12:45',
+-      category: 'Relaxation',
+-      icon: 'Γ£¿',
+-    },
+-    {
+-      title: 'Sleep Story: The Forest Path',
+-      duration: '25:00',
+-      category: 'Sleep',
+-      icon: '≡ƒî▓',
+-    },
+-    {
+-      title: 'Anxiety Release Meditation',
+-      duration: '10:15',
+-      category: 'Anxiety',
+-      icon: '≡ƒîè',
+-    },
+-    {
+-      title: 'Loving-Kindness Meditation',
+-      duration: '8:30',
+-      category: 'Self-Compassion',
+-      icon: '≡ƒÆû',
+-    },
+-    {
+-      title: 'Grounding Technique Walkthrough',
+-      duration: '6:40',
+-      category: 'Grounding',
+-      icon: '≡ƒî┐',
+-    },
+-  ];
++  const articleCategories = ['All', ...Array.from(new Set(articles.map((a) => a.category)))];
++  const filteredArticles =
++    articleFilter === 'All' ? articles : articles.filter((a) => a.category === articleFilter);
+ 
+   return (
+     <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
+       <div className="max-w-7xl mx-auto">
++
++        {/* ΓöÇΓöÇ Header ΓöÇΓöÇ */}
+         <div className="mb-12">
+-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Resources & Support</h1>
+-          <p className="text-gray-600">
+-            Everything you need to understand your mental health and access support when you need it.
++          <h1 className="text-4xl font-bold text-gray-900 mb-2">Resources &amp; Support</h1>
++          <p className="text-gray-600 max-w-2xl">
++            Verified Indian helplines, educational articles, embedded relaxation music, and
++            professional support ΓÇö everything you need on your wellbeing journey.
+           </p>
+         </div>
+ 
+-        <section className="mb-12">
++        {/* ΓöÇΓöÇ Crisis Banner ΓöÇΓöÇ */}
++        <section className="mb-10 rounded-2xl bg-gradient-to-r from-rose-50 to-orange-50 border-2 border-rose-200 p-6 flex flex-col sm:flex-row items-start sm:items-center gap-4">
++          <div className="p-3 bg-rose-100 rounded-xl flex-shrink-0">
++            <Heart className="w-6 h-6 text-rose-600" />
++          </div>
++          <div className="flex-1">
++            <h3 className="text-lg font-bold text-gray-900 mb-1">In Crisis Right Now?</h3>
++            <p className="text-gray-700 text-sm">
++              If you're in immediate distress or thinking of harming yourself, please call{' '}
++              <span className="font-bold text-rose-600">iCall: 9152987821</span> or{' '}
++              <span className="font-bold text-rose-600">Tele MANAS: 14416</span>. Help is
++              available 24&times;7, free of charge.
++            </p>
++          </div>
++          <a
++            href="tel:14416"
++            className="flex-shrink-0 px-5 py-2.5 rounded-xl bg-rose-600 text-white font-semibold hover:bg-rose-700 transition-colors text-sm"
++          >
++            Call 14416 Now
++          </a>
++        </section>
++
++        {/* ΓöÇΓöÇ Helplines ΓöÇΓöÇ */}
++        <section className="mb-14">
+           <div className="flex items-center gap-3 mb-6">
+-            <AlertTriangle className="w-6 h-6 text-rose-600" />
+-            <h2 className="text-2xl font-bold text-gray-900">Immediate Support</h2>
++            <Phone className="w-5 h-5 text-rose-600" />
++            <h2 className="text-2xl font-bold text-gray-900">Immediate Support (India)</h2>
+           </div>
+-          <div className="grid md:grid-cols-3 gap-6">
+-            {emergencyResources.map((resource, idx) => {
+-              const Icon = resource.icon;
+-              return (
+-                <div
+-                  key={idx}
+-                  className="bg-white rounded-2xl p-6 shadow-soft border-l-4 border-rose-500 hover:shadow-softLg transition-all"
+-                >
+-                  <Icon className="w-8 h-8 text-rose-600 mb-4" />
+-                  <h3 className="font-bold text-gray-900 mb-2">{resource.name}</h3>
+-                  <p className="text-lg font-semibold text-rose-600 mb-2">{resource.phoneDisplay}</p>
+-                  <p className="text-gray-600 text-sm">{resource.description}</p>
++          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
++            {helplines.map((h, idx) => (
++              <div
++                key={idx}
++                className="bg-white rounded-2xl p-6 shadow-soft border-l-4 border-rose-500 hover:shadow-softLg transition-all flex flex-col"
++              >
++                <div className="flex items-start justify-between mb-2">
++                  <h3 className="font-bold text-gray-900 text-sm leading-snug">{h.name}</h3>
++                  {h.badge && (
++                    <span className="ml-2 flex-shrink-0 text-[10px] font-semibold bg-rose-50 text-rose-600 border border-rose-200 px-2 py-0.5 rounded-full">
++                      {h.badge}
++                    </span>
++                  )}
++                </div>
++                {h.phone ? (
+                   <a
+-                    href={resource.link}
+-                    target={resource.link.startsWith('http') ? '_blank' : undefined}
+-                    rel={resource.link.startsWith('http') ? 'noopener noreferrer' : undefined}
+-                    className="mt-4 w-full block text-center px-4 py-2 rounded-lg bg-rose-50 text-rose-600 font-medium hover:bg-rose-100 transition-colors"
++                    href={`tel:${h.phone}`}
++                    className="text-xl font-bold text-rose-600 hover:text-rose-700 mb-1 transition-colors"
+                   >
+-                    {resource.linkLabel}
++                    {h.phoneDisplay}
+                   </a>
+-                </div>
+-              );
+-            })}
++                ) : (
++                  <p className="text-lg font-semibold text-rose-600 mb-1">{h.phoneDisplay}</p>
++                )}
++                <p className="text-xs text-amber-700 font-medium mb-2">≡ƒòÉ {h.hours}</p>
++                <p className="text-gray-600 text-sm flex-1 mb-4">{h.description}</p>
++                <a
++                  href={h.link}
++                  target={h.link.startsWith('http') ? '_blank' : undefined}
++                  rel={h.link.startsWith('http') ? 'noopener noreferrer' : undefined}
++                  className="mt-auto w-full block text-center px-4 py-2 rounded-lg bg-rose-50 text-rose-600 font-medium hover:bg-rose-100 transition-colors text-sm"
++                >
++                  {h.linkLabel}
++                </a>
++              </div>
++            ))}
+           </div>
+         </section>
+ 
+-        <section className="mb-12 bg-gradient-to-r from-sky-50 to-mint-50 rounded-2xl p-8 border border-sky-200">
+-          <div className="flex items-start gap-4">
+-            <Heart className="w-6 h-6 text-sky-600 flex-shrink-0 mt-1" />
+-            <div>
+-              <h3 className="text-lg font-bold text-gray-900 mb-2">In Crisis?</h3>
+-              <p className="text-gray-700 mb-4">
+-                If you're thinking about harming yourself or others, please reach out for immediate help. You deserve support, and there are people
+-                ready to listen.
+-              </p>
+-              <a
+-                href="https://www.findahelpline.com/"
+-                target="_blank"
+-                rel="noopener noreferrer"
+-                className="px-6 py-3 rounded-lg bg-sky-600 text-white font-semibold hover:bg-sky-700 transition-colors"
++        {/* ΓöÇΓöÇ Educational Articles ΓöÇΓöÇ */}
++        <section className="mb-14">
++          <div className="flex items-center gap-3 mb-4">
++            <BookOpen className="w-5 h-5 text-mint-600" />
++            <h2 className="text-2xl font-bold text-gray-900">Educational Articles</h2>
++          </div>
++          {/* Filter pills */}
++          <div className="flex flex-wrap gap-2 mb-6">
++            {articleCategories.map((cat) => (
++              <button
++                key={cat}
++                onClick={() => setArticleFilter(cat)}
++                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
++                  articleFilter === cat
++                    ? 'bg-mint-500 text-white shadow-soft'
++                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
++                }`}
+               >
+-                Find Crisis Services Near You
+-              </a>
+-            </div>
++                {cat}
++              </button>
++            ))}
+           </div>
+-        </section>
+-
+-        <section className="mb-12">
+-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Educational Articles</h2>
+           <div className="grid md:grid-cols-2 gap-6">
+-            {articles.map((article, idx) => (
++            {filteredArticles.map((article, idx) => (
+               <article
+                 key={idx}
+-                className="bg-white rounded-2xl p-6 shadow-soft hover:shadow-softLg transition-all cursor-pointer group"
++                className="bg-white rounded-2xl p-6 shadow-soft hover:shadow-softLg transition-all group flex flex-col"
+               >
+                 <div className="flex items-start justify-between mb-3">
+                   <span className="px-3 py-1 rounded-full text-xs font-semibold bg-mint-100 text-mint-700">
+                     {article.category}
+                   </span>
+-                  <span className="text-xs text-gray-500">{article.readTime}</span>
++                  <span className="text-xs text-gray-400">{article.readTime} read</span>
+                 </div>
+                 <h3 className="font-bold text-gray-900 mb-2 group-hover:text-mint-600 transition-colors">
+                   {article.title}
+                 </h3>
+-                <p className="text-gray-600 text-sm mb-4">{article.excerpt}</p>
+-                <a
+-                  href="https://www.nimh.nih.gov/health/topics"
+-                  target="_blank"
+-                  rel="noopener noreferrer"
+-                  className="text-mint-600 font-semibold text-sm hover:text-mint-700 transition-colors"
+-                >
+-                  Read Article ΓåÆ
+-                </a>
++                <p className="text-gray-600 text-sm mb-4 flex-1">{article.excerpt}</p>
++                <div className="flex items-center justify-between">
++                  <span className="text-xs text-gray-400 italic">Source: {article.source}</span>
++                  <a
++                    href={article.link}
++                    target="_blank"
++                    rel="noopener noreferrer"
++                    className="flex items-center gap-1 text-mint-600 font-semibold text-sm hover:text-mint-700 transition-colors"
++                  >
++                    Read Article <ExternalLink className="w-3 h-3" />
++                  </a>
++                </div>
+               </article>
+             ))}
+           </div>
+         </section>
+ 
+-        <section className="mb-12">
+-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Guided Audio Resources</h2>
+-          <p className="text-gray-600 mb-8">
+-            Calming meditations and guided exercises to support your emotional wellness.
+-          </p>
+-          <div className="grid md:grid-cols-3 gap-6">
+-            {audioGuides.map((guide, idx) => (
+-              <a
+-                key={idx}
+-                href="https://www.youtube.com/results?search_query=guided+meditation"
+-                target="_blank"
+-                rel="noopener noreferrer"
+-                className="bg-white rounded-2xl p-6 shadow-soft hover:shadow-softLg transition-all text-left group block"
+-              >
+-                <div className="text-5xl mb-4 group-hover:scale-110 transition-transform">{guide.icon}</div>
+-                <h3 className="font-bold text-gray-900 mb-2">{guide.title}</h3>
+-                <div className="flex items-center justify-between">
+-                  <span className="text-xs font-semibold bg-sky-100 text-sky-700 px-2 py-1 rounded">
+-                    {guide.category}
+-                  </span>
+-                  <span className="text-xs text-gray-500">{guide.duration}</span>
+-                </div>
+-                <div className="mt-4 flex items-center gap-2 text-mint-600 font-medium">
+-                  <Music className="w-4 h-4" />
+-                  Listen Now
+-                </div>
+-              </a>
+-            ))}
++        {/* ΓöÇΓöÇ Guided Audio / Embedded Music ΓöÇΓöÇ */}
++        <section className="mb-14">
++          <div className="flex items-center gap-3 mb-2">
++            <Music className="w-5 h-5 text-sky-600" />
++            <h2 className="text-2xl font-bold text-gray-900">Guided Audio Resources</h2>
+           </div>
+-        </section>
++          <p className="text-gray-500 text-sm mb-6">
++            Indian classical and guided meditation music. Click a card to play directly here ΓÇö or
++            open in YouTube.
++          </p>
+ 
+-        <section className="mb-12">
+-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Professional Support</h2>
+-          <div className="grid md:grid-cols-2 gap-6">
+-            {[
+-              {
+-                title: 'Therapist Directory',
+-                description: 'Find licensed therapists and counselors in your area or online',
+-                icon: Users,
+-                color: 'from-mint-500 to-sky-500',
+-              },
+-              {
+-                title: 'Psychiatrist Services',
+-                description: 'Access psychiatric evaluation and medication management',
+-                icon: BookOpen,
+-                color: 'from-sky-500 to-blue-500',
+-              },
+-            ].map((service, idx) => {
+-              const Icon = service.icon;
++          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
++            {audioGuides.map((guide) => {
++              const isActive = activeEmbed === guide.youtubeId;
+               return (
+-                <div key={idx} className="bg-white rounded-2xl p-8 shadow-soft hover:shadow-softLg transition-all">
+-                  <div className={`inline-block p-3 rounded-lg bg-gradient-to-br ${service.color} mb-4`}>
+-                    <Icon className="w-6 h-6 text-white" />
+-                  </div>
+-                  <h3 className="font-bold text-gray-900 mb-2">{service.title}</h3>
+-                  <p className="text-gray-600 mb-6">{service.description}</p>
+-                  <div className="space-y-2 mb-6">
+-                    <p className="text-sm text-gray-700">Γ£ô Verified professionals</p>
+-                    <p className="text-sm text-gray-700">Γ£ô Flexible scheduling</p>
+-                    <p className="text-sm text-gray-700">Γ£ô Insurance accepted</p>
++                <div
++                  key={guide.youtubeId}
++                  className="bg-white rounded-2xl shadow-soft hover:shadow-softLg transition-all overflow-hidden flex flex-col"
++                >
++                  {/* Embed or Thumbnail */}
++                  {isActive ? (
++                    <div className="relative" style={{ paddingBottom: '56.25%' }}>
++                      <iframe
++                        className="absolute inset-0 w-full h-full"
++                        src={`https://www.youtube.com/embed/${guide.youtubeId}?autoplay=1&rel=0`}
++                        title={guide.title}
++                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
++                        allowFullScreen
++                      />
++                    </div>
++                  ) : (
++                    <button
++                      onClick={() => setActiveEmbed(guide.youtubeId)}
++                      className="relative w-full group/thumb"
++                      style={{ paddingBottom: '56.25%' }}
++                      aria-label={`Play ${guide.title}`}
++                    >
++                      <img
++                        src={`https://img.youtube.com/vi/${guide.youtubeId}/mqdefault.jpg`}
++                        alt={guide.title}
++                        className="absolute inset-0 w-full h-full object-cover"
++                      />
++                      {/* dark overlay + play icon */}
++                      <div className="absolute inset-0 bg-black/30 group-hover/thumb:bg-black/45 transition-colors flex items-center justify-center">
++                        <PlayCircle className="w-14 h-14 text-white drop-shadow-lg" />
++                      </div>
++                    </button>
++                  )}
++
++                  {/* Card body */}
++                  <div className="p-5 flex flex-col flex-1">
++                    <div className="flex items-center gap-2 mb-2">
++                      <span className="text-2xl">{guide.icon}</span>
++                      <span className="text-xs font-semibold bg-sky-100 text-sky-700 px-2 py-0.5 rounded-full">
++                        {guide.category}
++                      </span>
++                      <span className="ml-auto text-xs text-gray-400">{guide.duration}</span>
++                    </div>
++                    <h3 className="font-bold text-gray-900 text-sm mb-1">{guide.title}</h3>
++                    <p className="text-gray-500 text-xs mb-4 flex-1">{guide.description}</p>
++                    <div className="flex gap-2">
++                      <button
++                        onClick={() => setActiveEmbed(isActive ? null : guide.youtubeId)}
++                        className="flex-1 flex items-center justify-center gap-1 px-3 py-2 rounded-lg bg-gradient-to-r from-sky-500 to-mint-500 text-white text-xs font-semibold hover:shadow-softLg transition-all"
++                      >
++                        <PlayCircle className="w-3.5 h-3.5" />
++                        {isActive ? 'Close' : 'Play Here'}
++                      </button>
++                      <a
++                        href={`https://www.youtube.com/watch?v=${guide.youtubeId}`}
++                        target="_blank"
++                        rel="noopener noreferrer"
++                        className="flex items-center justify-center gap-1 px-3 py-2 rounded-lg bg-gray-100 text-gray-600 text-xs font-semibold hover:bg-gray-200 transition-colors"
++                        title="Open in YouTube"
++                      >
++                        <ExternalLink className="w-3.5 h-3.5" />
++                        YouTube
++                      </a>
++                    </div>
+                   </div>
+-                  <a
+-                    href="https://www.psychologytoday.com/us/therapists"
+-                    target="_blank"
+-                    rel="noopener noreferrer"
+-                    className="w-full block text-center px-6 py-3 rounded-lg bg-gray-100 text-gray-900 font-semibold hover:bg-gray-200 transition-colors"
+-                  >
+-                    Find a Professional
+-                  </a>
+                 </div>
+               );
+             })}
+           </div>
+         </section>
+ 
++        {/* ΓöÇΓöÇ Professional Support ΓöÇΓöÇ */}
++        <section className="mb-14">
++          <div className="flex items-center gap-3 mb-6">
++            <Users className="w-5 h-5 text-indigo-600" />
++            <h2 className="text-2xl font-bold text-gray-900">Professional Support (India)</h2>
++          </div>
++          <div className="grid sm:grid-cols-2 gap-6">
++            {professionalServices.map((svc, idx) => (
++              <div key={idx} className="bg-white rounded-2xl p-7 shadow-soft hover:shadow-softLg transition-all flex flex-col">
++                <div className="flex items-start justify-between mb-3">
++                  <div
++                    className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold text-white bg-gradient-to-r ${svc.color}`}
++                  >
++                    {svc.badge}
++                  </div>
++                </div>
++                <h3 className="font-bold text-gray-900 text-lg mb-2">{svc.title}</h3>
++                <p className="text-gray-600 text-sm mb-4 flex-1">{svc.description}</p>
++                <ul className="space-y-1.5 mb-5">
++                  {svc.features.map((f, fi) => (
++                    <li key={fi} className="text-sm text-gray-700 flex items-center gap-2">
++                      <span className="w-4 h-4 rounded-full bg-mint-100 text-mint-600 flex items-center justify-center text-xs font-bold flex-shrink-0">Γ£ô</span>
++                      {f}
++                    </li>
++                  ))}
++                </ul>
++                <a
++                  href={svc.link}
++                  target="_blank"
++                  rel="noopener noreferrer"
++                  className={`w-full block text-center px-5 py-2.5 rounded-xl text-white font-semibold bg-gradient-to-r ${svc.color} hover:shadow-softLg transition-all text-sm`}
++                >
++                  {svc.linkLabel}
++                </a>
++              </div>
++            ))}
++          </div>
++        </section>
++
++        {/* ΓöÇΓöÇ Directory Link ΓöÇΓöÇ */}
++        <section className="mb-10 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-2xl p-7 border border-indigo-200 flex flex-col sm:flex-row items-center gap-5">
++          <Globe className="w-10 h-10 text-indigo-500 flex-shrink-0" />
++          <div className="flex-1 text-center sm:text-left">
++            <h3 className="font-bold text-gray-900 mb-1">Need More Local Help?</h3>
++            <p className="text-gray-600 text-sm">
++              The Mind Clan is India's most inclusive therapist and support-group directory ΓÇö filter
++              by city, language, specialisation, and budget.
++            </p>
++          </div>
++          <a
++            href="https://themindclan.com"
++            target="_blank"
++            rel="noopener noreferrer"
++            className="flex-shrink-0 px-5 py-2.5 rounded-xl bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors text-sm"
++          >
++            Browse Directory
++          </a>
++        </section>
++
++        {/* ΓöÇΓöÇ Footer CTA ΓöÇΓöÇ */}
+         <section className="bg-gradient-to-r from-mint-100 to-sky-100 rounded-2xl p-8 border border-mint-200 text-center">
+-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Your Mental Health Matters</h2>
+-          <p className="text-gray-800 max-w-2xl mx-auto mb-6">
+-            Seeking help is a sign of strength, not weakness. Whether you need immediate support, educational resources, or professional care, we're
+-            here to help you every step of the way.
+-          </p>
+-          <p className="text-gray-800 font-semibold mb-6">
+-            If you're ready to take the next step, reach out to a professional today.
++          <h2 className="text-2xl font-bold text-gray-900 mb-3">Your Mental Health Matters ≡ƒç«≡ƒç│</h2>
++          <p className="text-gray-700 max-w-2xl mx-auto mb-6 text-sm">
++            Seeking help is a sign of strength, not weakness. Whether you need a helpline, an
++            article to understand what you're feeling, calming music, or a professional ΓÇö we're
++            here to help every step of the way.
+           </p>
+           <Link
+-            to="/dashboard"
+-            className="inline-block px-8 py-3 rounded-lg bg-white text-mint-600 font-semibold hover:bg-gray-100 transition-colors"
++            to="/screening"
++            className="inline-block px-8 py-3 rounded-xl bg-gradient-to-r from-mint-500 to-sky-500 text-white font-semibold hover:shadow-softLg transition-all"
+           >
+-            Get Started Today
++            Take a Screening Now
+           </Link>
+         </section>
++
+       </div>
+     </div>
+   );
+diff --git a/src/services/communityService.ts b/src/services/communityService.ts
+index b9ec8ea..54cc0ef 100644
+--- a/src/services/communityService.ts
++++ b/src/services/communityService.ts
+@@ -5,6 +5,7 @@ import {
+   doc,
+   DocumentData,
+   getDocs,
++  increment,
+   limit,
+   orderBy,
+   query,
+@@ -27,8 +28,7 @@ export interface CommunityStory {
+ }
+ 
+ /**
+- * Submit a new community story.  Basic moderation (author stored but
+- * frontΓÇæend handles anonymity) and timestamps added here.
++ * Submit a new community story. Author stored but front-end handles anonymity.
+  */
+ export async function postStory(
+   excerpt: string,
+@@ -47,8 +47,7 @@ export async function postStory(
+ }
+ 
+ /**
+- * Fetch a page of recent stories.  Returns documents and a cursor that
+- * can be passed to fetchMoreStories if you want pagination.
++ * Fetch a page of recent stories. Returns documents and a cursor for pagination.
+  */
+ export async function fetchStories(
+   pageSize = 10,
+@@ -64,15 +63,15 @@ export async function fetchStories(
+   }
+ 
+   const snap = await getDocs(q);
+-  const stories: CommunityStory[] = snap.docs.map(doc => {
+-    const data = doc.data();
++  const stories: CommunityStory[] = snap.docs.map(d => {
++    const data = d.data();
+     return {
+-      id: doc.id,
++      id: d.id,
+       excerpt: data.excerpt,
+       author: data.author,
+       authorId: data.authorId,
+-      reactions: data.reactions,
+-      comments: data.comments,
++      reactions: data.reactions ?? 0,
++      comments: data.comments ?? 0,
+       createdAt: data.createdAt,
+     } as CommunityStory;
+   });
+@@ -96,22 +95,22 @@ export async function fetchUserStories(
+   );
+ 
+   const snap = await getDocs(q);
+-  return snap.docs.map(doc => {
+-    const data = doc.data();
++  return snap.docs.map(d => {
++    const data = d.data();
+     return {
+-      id: doc.id,
++      id: d.id,
+       excerpt: data.excerpt,
+       author: data.author,
+       authorId: data.authorId,
+-      reactions: data.reactions,
+-      comments: data.comments,
++      reactions: data.reactions ?? 0,
++      comments: data.comments ?? 0,
+       createdAt: data.createdAt,
+     } as CommunityStory;
+   });
+ }
+ 
+ /**
+- * Update a story
++ * Update a story's text
+  */
+ export async function updateStory(
+   storyId: string,
+@@ -133,15 +132,17 @@ export async function deleteStory(storyId: string): Promise<void> {
+ }
+ 
+ /**
+- * React to a story (increment reactions)
++ * React to a story ΓÇô uses Firestore atomic increment for race-condition safety.
+  */
+ export async function reactToStory(storyId: string): Promise<void> {
+   const storyDoc = doc(db, 'communityStories', storyId);
+-  const snap = await getDocs(query(collection(db, 'communityStories')));
+-  // This is a simple implementation - in production you'd use increment
+-  const story = snap.docs.find(d => d.id === storyId);
+-  if (story) {
+-    const currentReactions = story.data().reactions || 0;
+-    await updateDoc(storyDoc, { reactions: currentReactions + 1 });
+-  }
++  await updateDoc(storyDoc, { reactions: increment(1) });
++}
++
++/**
++ * Undo a reaction (decrement, floor at 0 handled client-side)
++ */
++export async function unreactToStory(storyId: string): Promise<void> {
++  const storyDoc = doc(db, 'communityStories', storyId);
++  await updateDoc(storyDoc, { reactions: increment(-1) });
+ }

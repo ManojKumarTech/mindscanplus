@@ -1,5 +1,5 @@
 import type { DocumentData, QueryDocumentSnapshot } from 'firebase/firestore';
-import { Edit2, Heart, MessageCircle, Shield, Trash2, Users, X } from 'lucide-react';
+import { Edit2, Heart, Shield, Trash2, Users, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -27,7 +27,14 @@ export default function Community() {
   const [editingStory, setEditingStory] = useState<CommunityStory | null>(null);
   const [submitting, setSubmitting] = useState(false);
   // Track which story IDs the current user has already reacted to (session-level)
-  const [reactedIds, setReactedIds] = useState<Set<string>>(new Set());
+  const [reactedIds, setReactedIds] = useState<Set<string>>(() => {
+    try {
+      const saved = localStorage.getItem('reactedStoryIds');
+      return saved ? new Set(JSON.parse(saved)) : new Set();
+    } catch {
+      return new Set();
+    }
+  });
   const { showToast } = useToast();
   const { user, userProfile } = useAuth();
 
@@ -39,7 +46,23 @@ export default function Community() {
       try {
         const { stories: fetched, nextCursor: cursor } = await fetchStories(PAGE_SIZE);
         if (!cancelled) {
-          setStories(fetched);
+          try {
+            const savedStr = localStorage.getItem('reactedStoryIds');
+            if (savedStr) {
+               const localLiked = new Set<string>(JSON.parse(savedStr));
+               const adjusted = fetched.map(s => {
+                 if (s.id && localLiked.has(s.id)) {
+                   return { ...s, reactions: s.reactions + 1 };
+                 }
+                 return s;
+               });
+               setStories(adjusted);
+            } else {
+               setStories(fetched);
+            }
+          } catch {
+            setStories(fetched);
+          }
           setNextCursor(cursor);
         }
       } catch (e) {
@@ -62,7 +85,7 @@ export default function Community() {
       description: 'Join groups based on your interests and challenges',
     },
     {
-      icon: MessageCircle,
+      icon: Users,
       title: 'Discussion Forums',
       description: 'Connect with others, ask questions, and share experiences',
     },
@@ -149,6 +172,7 @@ export default function Community() {
     setReactedIds(prev => {
       const next = new Set(prev);
       alreadyReacted ? next.delete(story.id!) : next.add(story.id!);
+      localStorage.setItem('reactedStoryIds', JSON.stringify(Array.from(next)));
       return next;
     });
 
@@ -259,10 +283,6 @@ export default function Community() {
                     <span className="flex items-center gap-2 text-gray-600">
                       <Heart className="w-4 h-4" />
                       <span className="text-xs">{story.reactions}</span>
-                    </span>
-                    <span className="flex items-center gap-2 text-gray-600">
-                      <MessageCircle className="w-4 h-4" />
-                      <span className="text-xs">{story.comments}</span>
                     </span>
                   </div>
                 </div>
@@ -409,10 +429,6 @@ export default function Community() {
                     >
                       <Heart className={`w-4 h-4 ${reactedIds.has(story.id!) ? 'fill-rose-500' : ''}`} />
                       <span>{story.reactions}</span>
-                    </button>
-                    <button className="flex items-center gap-2 text-gray-500 hover:text-sky-600 transition-colors px-3 py-1.5 rounded-lg hover:bg-sky-50 text-sm">
-                      <MessageCircle className="w-4 h-4" />
-                      <span>{story.comments}</span>
                     </button>
                     {isOwnStory(story) && (
                       <span className="ml-auto text-xs text-mint-600 font-medium bg-mint-50 px-2 py-1 rounded">Your story</span>

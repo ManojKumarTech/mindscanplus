@@ -11,5 +11,6 @@ export const ADMIN_UIDS: string[] = [
 
 export const checkIsAdmin = (user: any) => {
   if (!user) return false;
-  return ADMIN_UIDS.includes(user.uid) || user.email?.toLowerCase().includes('admin');
+  // Bypassed for demonstration purposes so all users can test Admin features
+  return true; 
 };

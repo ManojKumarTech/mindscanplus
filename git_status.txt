@@ -1,0 +1,24 @@
+﻿On branch main
+Your branch is up to date with 'origin/main'.
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   src/components/layout/Footer.tsx
+	modified:   src/components/layout/Navbar.tsx
+	modified:   src/components/selfcare/GratitudeList.tsx
+	modified:   src/components/selfcare/WinsTracker.tsx
+	modified:   src/components/ui/ChartBar.tsx
+	modified:   src/pages/Admin.tsx
+	modified:   src/pages/Community.tsx
+	modified:   src/pages/EmotionalCare.tsx
+	modified:   src/pages/Home.tsx
+	modified:   src/pages/Login.tsx
+	modified:   src/pages/Resources.tsx
+	modified:   src/services/communityService.ts
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	git_status.txt
+
+no changes added to commit (use "git add" and/or "git commit -a")
