@@ -14,6 +14,11 @@ export interface ScreeningResult {
     stressLevel: 'Low' | 'Moderate' | 'High';
     createdAt: any;
     id?: string;
+    // New fields for Adaptive Screening
+    themeId?: string;
+    themeName?: string;
+    severityLevel?: number;
+    score100?: number;
 }
 
 /**
@@ -24,16 +29,27 @@ export interface ScreeningResult {
 export async function saveScreeningResult(
     userId: string,
     stressScore: number,
-    stressLevel: 'Low' | 'Moderate' | 'High'
+    stressLevel: 'Low' | 'Moderate' | 'High',
+    themeId?: string,
+    themeName?: string,
+    severityLevel?: number,
+    score100?: number
 ): Promise<string> {
     try {
+        const payload: any = {
+            stressScore,
+            stressLevel,
+            createdAt: serverTimestamp(),
+        };
+
+        if (themeId) payload.themeId = themeId;
+        if (themeName) payload.themeName = themeName;
+        if (severityLevel !== undefined) payload.severityLevel = severityLevel;
+        if (score100 !== undefined) payload.score100 = score100;
+
         const docRef = await addDoc(
             collection(db, 'users', userId, 'screeningResults'),
-            {
-                stressScore,
-                stressLevel,
-                createdAt: serverTimestamp(),
-            }
+            payload
         );
         return docRef.id;
     } catch (error) {

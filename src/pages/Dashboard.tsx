@@ -19,17 +19,28 @@ export default function Dashboard() {
   const { achievements: dbAchievements, loading: achievementsLoading } = useAchievements();
   const [showAllHistory, setShowAllHistory] = useState(false);
 
-  // convert last7Days into chart-compatible moodData
-  // Invert the score so that low stress = high bar (good), high stress = low bar (bad)
+  // convert last7Days into chart-compatible stressData
+  // Use raw score directly: high bar = high stress (matches screening page scale 1–5)
   const moodData = useMemo(() => {
     if (!metrics) return [];
-    return metrics.last7Days.map(day => ({
-      day: new Date(day.date).toLocaleDateString('en-US', { weekday: 'short' }),
-      // Invert: 5 - score gives us 1-5 where 5 = best (low stress), 1 = worst (high stress)
-      value: day.results.length > 0 ? 5 - day.averageScore + 1 : 0,
-      originalScore: day.averageScore,
-      hasData: day.results.length > 0,
-    }));
+    return metrics.last7Days.map(day => {
+      const score = day.results.length > 0 ? day.averageScore : 0;
+      // Color matches screening page: <=2 green, <=3.5 amber, >3.5 red
+      const colorClass =
+        score === 0
+          ? 'bg-gray-200'
+          : score <= 2
+          ? 'bg-emerald-400'
+          : score <= 3.5
+          ? 'bg-amber-400'
+          : 'bg-rose-500';
+      return {
+        day: new Date(day.date).toLocaleDateString('en-US', { weekday: 'short' }),
+        value: score,
+        colorClass,
+        hasData: day.results.length > 0,
+      };
+    });
   }, [metrics]);
 
   // Calculate stress level distribution for pie chart
@@ -71,29 +82,37 @@ export default function Dashboard() {
 
   const moodTrend = useMemo(() => {
     if (!metrics || metrics.last7Days.length < 2) return '—';
-    const first = metrics.last7Days[0].averageScore;
-    const last = metrics.last7Days[metrics.last7Days.length - 1].averageScore;
-    return last >= first ? 'Improving' : 'Declining';
+    // Find first and last days WITH actual data
+    const withData = metrics.last7Days.filter(d => d.results.length > 0);
+    if (withData.length < 2) return '—';
+    const first = withData[0].averageScore;
+    const last = withData[withData.length - 1].averageScore;
+    // Lower score = less stress = Improving; higher score = more stress = Declining
+    return last <= first ? 'Improving' : 'Declining';
   }, [metrics]);
 
   const screeningHistory = useMemo(() => {
     if (!metrics) return [];
-    const ordered = [...metrics.last7Days].reverse();
+    const ordered = [...metrics.last7Days].filter(d => d.results.length > 0).reverse();
     return ordered.map((day, idx) => {
       const prev = ordered[idx + 1];
-      const trend = day.averageScore
-        ? day.averageScore >= (prev?.averageScore || 0)
-          ? 'up'
-          : 'down'
-        : 'up';
+      // score 1-5: low = calm/well, high = stressed
+      // trend: score going DOWN = improving (good = green), score going UP = worsening (bad = red)
+      const trend = day.averageScore && prev?.averageScore
+        ? day.averageScore <= prev.averageScore
+          ? 'down'   // score fell = improving
+          : 'up'     // score rose = worsening
+        : 'neutral';
+      // Stage labels match useScreeningFlow: <=2 Low, <=3.5 Moderate, >3.5 High
+      const stage =
+        day.averageScore <= 2
+          ? 'Low Stress'
+          : day.averageScore <= 3.5
+          ? 'Moderate Stress'
+          : 'High Stress';
       return {
         date: day.date,
-        stage:
-          day.averageScore <= 2
-            ? 'High Stress'
-            : day.averageScore <= 3
-            ? 'Moderate Stress'
-            : 'Low Stress',
+        stage,
         score: day.averageScore,
         trend,
       };
@@ -106,7 +125,7 @@ export default function Dashboard() {
     return screeningHistory.slice(0, 4);
   }, [screeningHistory, showAllHistory]);
 
-  // Get recommendation based on mood trend
+  // Get recommendation based on stress trend
   const recommendation = useMemo(() => {
     if (!metrics || metrics.totalResults === 0) {
       return {
@@ -116,7 +135,9 @@ export default function Dashboard() {
         icon: Sparkles,
       };
     }
-    if (moodTrend === 'Declining' || (metrics.currentMonth.averageScore > 3)) {
+    // High stress = LOW score (<=2 is Low Stress zone in screening scale)
+    // averageScore <= 2 means high stress on the screening scale
+    if (moodTrend === 'Declining' || (metrics.currentMonth.averageScore > 0 && metrics.currentMonth.averageScore > 3.5)) {
       return {
         title: 'Try Emotional Care',
         description: 'Explore techniques to help manage stress and improve wellbeing.',
@@ -182,19 +203,41 @@ export default function Dashboard() {
         </div>
 
         {loading && (
-          <p className="text-center text-gray-500 mb-4">Loading dashboard data…</p>
+          <div className="flex items-center justify-center gap-3 mb-6 text-gray-400">
+            <svg className="animate-spin w-5 h-5" viewBox="0 0 24 24" fill="none">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+            </svg>
+            <span className="text-sm">Loading your dashboard…</span>
+          </div>
         )}
         {error && (
-          <p className="text-center text-red-500 mb-4">Error: {error}</p>
+          <div className="p-4 mb-6 bg-red-50 border border-red-200 rounded-xl">
+            <p className="text-red-600 text-sm font-medium">⚠️ Could not load data: {error}</p>
+          </div>
+        )}
+        {/* First-time user CTA */}
+        {!loading && metrics && metrics.totalResults === 0 && (
+          <div className="mb-8 p-8 bg-gradient-to-r from-mint-50 to-sky-50 border-2 border-dashed border-mint-300 rounded-2xl text-center">
+            <div className="text-5xl mb-4">🌱</div>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">Start Your Wellness Journey</h3>
+            <p className="text-gray-600 mb-6">Take your first screening to see your mood trends, streaks, and personalized insights here.</p>
+            <Link
+              to="/screening"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-mint-500 to-sky-500 text-white font-semibold hover:shadow-softLg transition-all hover:scale-105"
+            >
+              Take First Screening
+            </Link>
+          </div>
         )}
 
         {/* Stats Cards */}
         <div className="grid md:grid-cols-3 gap-6 mb-8">
           <StatsCard
-            title="Weekly Average Mood"
+            title="Avg Stress Score"
             icon={<Heart className="w-5 h-5 text-pink-500" />}
-            value={weeklyAvg}
-            subtitle={!loading && 'based on last 7 days'}
+            value={weeklyAvg > 0 ? `${weeklyAvg}/5` : '—'}
+            subtitle={!loading && weeklyAvg > 0 ? (weeklyAvg <= 2 ? '🟢 Low stress — you\'re doing great!' : weeklyAvg <= 3.5 ? '🟡 Moderate — take some care time' : '🔴 High stress — consider support') : 'Take a screening to see'}
             loading={loading}
           />
 
@@ -210,30 +253,38 @@ export default function Dashboard() {
             title="Mood Trend"
             icon={<Calendar className="w-5 h-5 text-sky-600" />}
             value={moodTrend}
-            subtitle={!loading && (moodTrend === 'Improving' ? "You're doing better this week" : "Your mood is declining")}
+            subtitle={!loading && (moodTrend === 'Improving' ? '📉 Stress is decreasing — great work!' : moodTrend === 'Declining' ? '📈 Stress is increasing — try some care' : 'No trend data yet')}
             loading={loading}
           />
         </div>
 
-        {/* Mood Trend Chart */}
+        {/* Stress Level Chart */}
         <section className="bg-white rounded-2xl p-8 shadow-soft mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Mood Trend (Last 7 Days)</h2>
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-2xl font-bold text-gray-900">Stress Level (Last 7 Days)</h2>
+            <div className="flex items-center gap-4 text-xs text-gray-500">
+              <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 rounded-sm bg-emerald-400"></span>Low</span>
+              <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 rounded-sm bg-amber-400"></span>Moderate</span>
+              <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 rounded-sm bg-rose-500"></span>High</span>
+            </div>
+          </div>
+          <p className="text-xs text-gray-400 mb-4">Taller bar = higher stress score (1–5 scale, same as screening)</p>
           <div className="flex items-end justify-between gap-2 h-40">
             {moodData.length === 0 ? (
-              <p className="mx-auto text-gray-500">No mood data available yet.</p>
+              <p className="mx-auto text-gray-500">No stress data available yet.</p>
             ) : (
               moodData.map((data, idx) => {
                 const height = (data.value / maxMood) * 100;
-                return <ChartBar key={idx} height={height} label={data.day} />;
+                return <ChartBar key={idx} height={height} label={data.day} colorClass={data.colorClass} score={data.hasData ? data.value : undefined} />;
               })
             )}
           </div>
           <p className="text-sm text-gray-600 mt-4">
             {moodTrend === 'Improving'
-              ? "Your mood is trending upward. Keep up the self-care activities—they're working!"
+              ? '📉 Stress is trending downward — keep up the great self-care!'
               : moodTrend === 'Declining'
-              ? "Consider trying Emotional Care activities or a screening to check in with yourself."
-              : 'Take a screening to see your mood trend here.'}
+              ? '📈 Stress is rising — consider trying Emotional Care activities or a new screening.'
+              : 'Take a screening to start tracking your stress trend here.'}
           </p>
         </section>
 
@@ -248,14 +299,23 @@ export default function Dashboard() {
                 displayedHistory.map((item, idx) => (
                   <div key={idx} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                     <div>
-                      <p className="font-semibold text-gray-900">{item.stage}</p>
+                      <p className={`font-semibold ${
+                        item.stage === 'Low Stress' ? 'text-emerald-700' :
+                        item.stage === 'Moderate Stress' ? 'text-amber-700' : 'text-rose-700'
+                      }`}>{item.stage}</p>
                       <p className="text-sm text-gray-600">{item.date}</p>
                     </div>
                     <div className="text-right">
-                      <p className="font-bold text-gray-900">{item.score}</p>
-                      <p className={`text-xs font-medium ${item.trend === 'up' ? 'text-green-600' : 'text-red-600'}`}>
-                        {item.trend === 'up' ? '↑' : '↓'} Trend
-                      </p>
+                      <p className="font-bold text-gray-900">{item.score}/5</p>
+                      {item.trend !== 'neutral' && (
+                        <p className={`text-xs font-medium ${
+                          // down = score decreased = stress dropped = GOOD (green)
+                          // up = score increased = stress rose = BAD (red)
+                          item.trend === 'down' ? 'text-emerald-600' : 'text-rose-600'
+                        }`}>
+                          {item.trend === 'down' ? '↓ Improving' : '↑ Worsening'}
+                        </p>
+                      )}
                     </div>
                   </div>
                 ))
