@@ -1,299 +1,327 @@
-import { Phone, Globe, BookOpen, Music, Users, Heart, AlertTriangle } from 'lucide-react';
+import {
+  BookOpen,
+  ExternalLink,
+  Globe,
+  Heart,
+  Music,
+  Phone,
+  PlayCircle,
+  Users,
+} from 'lucide-react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import {
+  articles,
+  audioGuides,
+  helplines,
+  professionalServices,
+} from '../services/resourcesData';
+
+// ──────────────────────────────────────────────────────────────────────────────
 
 export default function Resources() {
-  const emergencyResources = [
-    {
-      name: 'National Crisis Hotline',
-      phone: '988',
-      phoneDisplay: '988 (Call or Text)',
-      description: 'Available 24/7 for immediate support during emotional distress',
-      icon: Phone,
-      link: 'tel:988',
-      linkLabel: 'Call or Text 988',
-    },
-    {
-      name: 'Crisis Text Line',
-      phone: '741741',
-      phoneDisplay: 'Text HOME to 741741',
-      description: 'Text-based crisis support whenever you need it',
-      icon: Phone,
-      link: 'https://www.crisistextline.org',
-      linkLabel: 'Open Crisis Text Line',
-    },
-    {
-      name: 'International Helpline',
-      phone: '',
-      phoneDisplay: 'findahelpline.com',
-      description: 'Find mental health support resources worldwide',
-      icon: Globe,
-      link: 'https://findahelpline.com',
-      linkLabel: 'Find a Helpline',
-    },
-  ];
+  const [activeEmbed, setActiveEmbed] = useState<string | null>(null);
+  const [articleFilter, setArticleFilter] = useState<string>('All');
 
-  const articles = [
-    {
-      title: 'Understanding Your Stress Cycle',
-      category: 'Education',
-      readTime: '5 min',
-      excerpt: 'Learn about the three stages of stress and how to recognize when you need support.',
-    },
-    {
-      title: 'Building Resilience: A Step-by-Step Guide',
-      category: 'Wellness',
-      readTime: '8 min',
-      excerpt: 'Discover practical techniques to strengthen your emotional resilience.',
-    },
-    {
-      title: 'The Science Behind Breathing Exercises',
-      category: 'Research',
-      readTime: '6 min',
-      excerpt: 'Understand how simple breathing techniques can calm your nervous system.',
-    },
-    {
-      title: 'Cultivating Self-Compassion',
-      category: 'Wellness',
-      readTime: '7 min',
-      excerpt: 'Learn to speak to yourself with the same kindness you offer others.',
-    },
-    {
-      title: 'Sleep and Mental Health: The Connection',
-      category: 'Health',
-      readTime: '6 min',
-      excerpt: 'Explore how sleep quality impacts your emotional wellbeing.',
-    },
-    {
-      title: 'Breaking the Stigma Around Mental Health',
-      category: 'Community',
-      readTime: '9 min',
-      excerpt: 'Why mental health deserves the same attention as physical health.',
-    },
-  ];
-
-  const audioGuides = [
-    {
-      title: '5-Minute Morning Meditation',
-      duration: '5:23',
-      category: 'Meditation',
-      icon: '🧘',
-    },
-    {
-      title: 'Guided Body Scan for Relaxation',
-      duration: '12:45',
-      category: 'Relaxation',
-      icon: '✨',
-    },
-    {
-      title: 'Sleep Story: The Forest Path',
-      duration: '25:00',
-      category: 'Sleep',
-      icon: '🌲',
-    },
-    {
-      title: 'Anxiety Release Meditation',
-      duration: '10:15',
-      category: 'Anxiety',
-      icon: '🌊',
-    },
-    {
-      title: 'Loving-Kindness Meditation',
-      duration: '8:30',
-      category: 'Self-Compassion',
-      icon: '💖',
-    },
-    {
-      title: 'Grounding Technique Walkthrough',
-      duration: '6:40',
-      category: 'Grounding',
-      icon: '🌿',
-    },
-  ];
+  const articleCategories = ['All', ...Array.from(new Set(articles.map((a) => a.category)))];
+  const filteredArticles =
+    articleFilter === 'All' ? articles : articles.filter((a) => a.category === articleFilter);
 
   return (
     <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
+
+        {/* ── Header ── */}
         <div className="mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Resources & Support</h1>
-          <p className="text-gray-600">
-            Everything you need to understand your mental health and access support when you need it.
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">Resources &amp; Support</h1>
+          <p className="text-gray-600 max-w-2xl">
+            Verified Indian helplines, educational articles, embedded relaxation music, and
+            professional support — everything you need on your wellbeing journey.
           </p>
         </div>
 
-        <section className="mb-12">
+        {/* ── Crisis Banner ── */}
+        <section className="mb-10 rounded-2xl bg-gradient-to-r from-rose-50 to-orange-50 border-2 border-rose-200 p-6 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+          <div className="p-3 bg-rose-100 rounded-xl flex-shrink-0">
+            <Heart className="w-6 h-6 text-rose-600" />
+          </div>
+          <div className="flex-1">
+            <h3 className="text-lg font-bold text-gray-900 mb-1">In Crisis Right Now?</h3>
+            <p className="text-gray-700 text-sm">
+              If you're in immediate distress or thinking of harming yourself, please call{' '}
+              <span className="font-bold text-rose-600">iCall: 9152987821</span> or{' '}
+              <span className="font-bold text-rose-600">Tele MANAS: 14416</span>. Help is
+              available 24&times;7, free of charge.
+            </p>
+          </div>
+          <a
+            href="tel:14416"
+            className="flex-shrink-0 px-5 py-2.5 rounded-xl bg-rose-600 text-white font-semibold hover:bg-rose-700 transition-colors text-sm"
+          >
+            Call 14416 Now
+          </a>
+        </section>
+
+        {/* ── Helplines ── */}
+        <section className="mb-14">
           <div className="flex items-center gap-3 mb-6">
-            <AlertTriangle className="w-6 h-6 text-rose-600" />
-            <h2 className="text-2xl font-bold text-gray-900">Immediate Support</h2>
+            <Phone className="w-5 h-5 text-rose-600" />
+            <h2 className="text-2xl font-bold text-gray-900">Immediate Support (India)</h2>
           </div>
-          <div className="grid md:grid-cols-3 gap-6">
-            {emergencyResources.map((resource, idx) => {
-              const Icon = resource.icon;
-              return (
-                <div
-                  key={idx}
-                  className="bg-white rounded-2xl p-6 shadow-soft border-l-4 border-rose-500 hover:shadow-softLg transition-all"
-                >
-                  <Icon className="w-8 h-8 text-rose-600 mb-4" />
-                  <h3 className="font-bold text-gray-900 mb-2">{resource.name}</h3>
-                  <p className="text-lg font-semibold text-rose-600 mb-2">{resource.phoneDisplay}</p>
-                  <p className="text-gray-600 text-sm">{resource.description}</p>
-                  <a
-                    href={resource.link}
-                    target={resource.link.startsWith('http') ? '_blank' : undefined}
-                    rel={resource.link.startsWith('http') ? 'noopener noreferrer' : undefined}
-                    className="mt-4 w-full block text-center px-4 py-2 rounded-lg bg-rose-50 text-rose-600 font-medium hover:bg-rose-100 transition-colors"
-                  >
-                    {resource.linkLabel}
-                  </a>
-                </div>
-              );
-            })}
-          </div>
-        </section>
-
-        <section className="mb-12 bg-gradient-to-r from-sky-50 to-mint-50 rounded-2xl p-8 border border-sky-200">
-          <div className="flex items-start gap-4">
-            <Heart className="w-6 h-6 text-sky-600 flex-shrink-0 mt-1" />
-            <div>
-              <h3 className="text-lg font-bold text-gray-900 mb-2">In Crisis?</h3>
-              <p className="text-gray-700 mb-4">
-                If you're thinking about harming yourself or others, please reach out for immediate help. You deserve support, and there are people
-                ready to listen.
-              </p>
-              <a
-                href="https://www.findahelpline.com/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-6 py-3 rounded-lg bg-sky-600 text-white font-semibold hover:bg-sky-700 transition-colors"
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {helplines.map((h, idx) => (
+              <div
+                key={idx}
+                className="bg-white rounded-2xl p-6 shadow-soft border-l-4 border-rose-500 hover:shadow-softLg transition-all flex flex-col"
               >
-                Find Crisis Services Near You
-              </a>
-            </div>
+                <div className="flex items-start justify-between mb-2">
+                  <h3 className="font-bold text-gray-900 text-sm leading-snug">{h.name}</h3>
+                  {h.badge && (
+                    <span className="ml-2 flex-shrink-0 text-[10px] font-semibold bg-rose-50 text-rose-600 border border-rose-200 px-2 py-0.5 rounded-full">
+                      {h.badge}
+                    </span>
+                  )}
+                </div>
+                {h.phone ? (
+                  <a
+                    href={`tel:${h.phone}`}
+                    className="text-xl font-bold text-rose-600 hover:text-rose-700 mb-1 transition-colors"
+                  >
+                    {h.phoneDisplay}
+                  </a>
+                ) : (
+                  <p className="text-lg font-semibold text-rose-600 mb-1">{h.phoneDisplay}</p>
+                )}
+                <p className="text-xs text-amber-700 font-medium mb-2">🕐 {h.hours}</p>
+                <p className="text-gray-600 text-sm flex-1 mb-4">{h.description}</p>
+                <a
+                  href={h.link}
+                  target={h.link.startsWith('http') ? '_blank' : undefined}
+                  rel={h.link.startsWith('http') ? 'noopener noreferrer' : undefined}
+                  className="mt-auto w-full block text-center px-4 py-2 rounded-lg bg-rose-50 text-rose-600 font-medium hover:bg-rose-100 transition-colors text-sm"
+                >
+                  {h.linkLabel}
+                </a>
+              </div>
+            ))}
           </div>
         </section>
 
-        <section className="mb-12">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Educational Articles</h2>
+        {/* ── Educational Articles ── */}
+        <section className="mb-14">
+          <div className="flex items-center gap-3 mb-4">
+            <BookOpen className="w-5 h-5 text-mint-600" />
+            <h2 className="text-2xl font-bold text-gray-900">Educational Articles</h2>
+          </div>
+          {/* Filter pills */}
+          <div className="flex flex-wrap gap-2 mb-6">
+            {articleCategories.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setArticleFilter(cat)}
+                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
+                  articleFilter === cat
+                    ? 'bg-mint-500 text-white shadow-soft'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
           <div className="grid md:grid-cols-2 gap-6">
-            {articles.map((article, idx) => (
+            {filteredArticles.map((article, idx) => (
               <article
                 key={idx}
-                className="bg-white rounded-2xl p-6 shadow-soft hover:shadow-softLg transition-all cursor-pointer group"
+                className="bg-white rounded-2xl p-6 shadow-soft hover:shadow-softLg transition-all group flex flex-col"
               >
                 <div className="flex items-start justify-between mb-3">
                   <span className="px-3 py-1 rounded-full text-xs font-semibold bg-mint-100 text-mint-700">
                     {article.category}
                   </span>
-                  <span className="text-xs text-gray-500">{article.readTime}</span>
+                  <span className="text-xs text-gray-400">{article.readTime} read</span>
                 </div>
                 <h3 className="font-bold text-gray-900 mb-2 group-hover:text-mint-600 transition-colors">
                   {article.title}
                 </h3>
-                <p className="text-gray-600 text-sm mb-4">{article.excerpt}</p>
-                <a
-                  href="https://www.nimh.nih.gov/health/topics"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-mint-600 font-semibold text-sm hover:text-mint-700 transition-colors"
-                >
-                  Read Article →
-                </a>
+                <p className="text-gray-600 text-sm mb-4 flex-1">{article.excerpt}</p>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-400 italic">Source: {article.source}</span>
+                  <a
+                    href={article.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1 text-mint-600 font-semibold text-sm hover:text-mint-700 transition-colors"
+                  >
+                    Read Article <ExternalLink className="w-3 h-3" />
+                  </a>
+                </div>
               </article>
             ))}
           </div>
         </section>
 
-        <section className="mb-12">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Guided Audio Resources</h2>
-          <p className="text-gray-600 mb-8">
-            Calming meditations and guided exercises to support your emotional wellness.
-          </p>
-          <div className="grid md:grid-cols-3 gap-6">
-            {audioGuides.map((guide, idx) => (
-              <a
-                key={idx}
-                href="https://www.youtube.com/results?search_query=guided+meditation"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="bg-white rounded-2xl p-6 shadow-soft hover:shadow-softLg transition-all text-left group block"
-              >
-                <div className="text-5xl mb-4 group-hover:scale-110 transition-transform">{guide.icon}</div>
-                <h3 className="font-bold text-gray-900 mb-2">{guide.title}</h3>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold bg-sky-100 text-sky-700 px-2 py-1 rounded">
-                    {guide.category}
-                  </span>
-                  <span className="text-xs text-gray-500">{guide.duration}</span>
-                </div>
-                <div className="mt-4 flex items-center gap-2 text-mint-600 font-medium">
-                  <Music className="w-4 h-4" />
-                  Listen Now
-                </div>
-              </a>
-            ))}
+        {/* ── Guided Audio / Embedded Music ── */}
+        <section className="mb-14">
+          <div className="flex items-center gap-3 mb-2">
+            <Music className="w-5 h-5 text-sky-600" />
+            <h2 className="text-2xl font-bold text-gray-900">Guided Audio Resources</h2>
           </div>
-        </section>
+          <p className="text-gray-500 text-sm mb-6">
+            Indian classical and guided meditation music. Click a card to play directly here — or
+            open in YouTube.
+          </p>
 
-        <section className="mb-12">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Professional Support</h2>
-          <div className="grid md:grid-cols-2 gap-6">
-            {[
-              {
-                title: 'Therapist Directory',
-                description: 'Find licensed therapists and counselors in your area or online',
-                icon: Users,
-                color: 'from-mint-500 to-sky-500',
-              },
-              {
-                title: 'Psychiatrist Services',
-                description: 'Access psychiatric evaluation and medication management',
-                icon: BookOpen,
-                color: 'from-sky-500 to-blue-500',
-              },
-            ].map((service, idx) => {
-              const Icon = service.icon;
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {audioGuides.map((guide) => {
+              const isActive = activeEmbed === guide.youtubeId;
               return (
-                <div key={idx} className="bg-white rounded-2xl p-8 shadow-soft hover:shadow-softLg transition-all">
-                  <div className={`inline-block p-3 rounded-lg bg-gradient-to-br ${service.color} mb-4`}>
-                    <Icon className="w-6 h-6 text-white" />
+                <div
+                  key={guide.youtubeId}
+                  className="bg-white rounded-2xl shadow-soft hover:shadow-softLg transition-all overflow-hidden flex flex-col"
+                >
+                  {/* Embed or Thumbnail */}
+                  {isActive ? (
+                    <div className="relative" style={{ paddingBottom: '56.25%' }}>
+                      <iframe
+                        className="absolute inset-0 w-full h-full"
+                        src={`https://www.youtube.com/embed/${guide.youtubeId}?autoplay=1&rel=0`}
+                        title={guide.title}
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                      />
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setActiveEmbed(guide.youtubeId)}
+                      className="relative w-full group/thumb"
+                      style={{ paddingBottom: '56.25%' }}
+                      aria-label={`Play ${guide.title}`}
+                    >
+                      <img
+                        src={`https://img.youtube.com/vi/${guide.youtubeId}/mqdefault.jpg`}
+                        alt={guide.title}
+                        className="absolute inset-0 w-full h-full object-cover"
+                      />
+                      {/* dark overlay + play icon */}
+                      <div className="absolute inset-0 bg-black/30 group-hover/thumb:bg-black/45 transition-colors flex items-center justify-center">
+                        <PlayCircle className="w-14 h-14 text-white drop-shadow-lg" />
+                      </div>
+                    </button>
+                  )}
+
+                  {/* Card body */}
+                  <div className="p-5 flex flex-col flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-2xl">{guide.icon}</span>
+                      <span className="text-xs font-semibold bg-sky-100 text-sky-700 px-2 py-0.5 rounded-full">
+                        {guide.category}
+                      </span>
+                      <span className="ml-auto text-xs text-gray-400">{guide.duration}</span>
+                    </div>
+                    <h3 className="font-bold text-gray-900 text-sm mb-1">{guide.title}</h3>
+                    <p className="text-gray-500 text-xs mb-4 flex-1">{guide.description}</p>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setActiveEmbed(isActive ? null : guide.youtubeId)}
+                        className="flex-1 flex items-center justify-center gap-1 px-3 py-2 rounded-lg bg-gradient-to-r from-sky-500 to-mint-500 text-white text-xs font-semibold hover:shadow-softLg transition-all"
+                      >
+                        <PlayCircle className="w-3.5 h-3.5" />
+                        {isActive ? 'Close' : 'Play Here'}
+                      </button>
+                      <a
+                        href={`https://www.youtube.com/watch?v=${guide.youtubeId}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center gap-1 px-3 py-2 rounded-lg bg-gray-100 text-gray-600 text-xs font-semibold hover:bg-gray-200 transition-colors"
+                        title="Open in YouTube"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                        YouTube
+                      </a>
+                    </div>
                   </div>
-                  <h3 className="font-bold text-gray-900 mb-2">{service.title}</h3>
-                  <p className="text-gray-600 mb-6">{service.description}</p>
-                  <div className="space-y-2 mb-6">
-                    <p className="text-sm text-gray-700">✓ Verified professionals</p>
-                    <p className="text-sm text-gray-700">✓ Flexible scheduling</p>
-                    <p className="text-sm text-gray-700">✓ Insurance accepted</p>
-                  </div>
-                  <a
-                    href="https://www.psychologytoday.com/us/therapists"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full block text-center px-6 py-3 rounded-lg bg-gray-100 text-gray-900 font-semibold hover:bg-gray-200 transition-colors"
-                  >
-                    Find a Professional
-                  </a>
                 </div>
               );
             })}
           </div>
         </section>
 
+        {/* ── Professional Support ── */}
+        <section className="mb-14">
+          <div className="flex items-center gap-3 mb-6">
+            <Users className="w-5 h-5 text-indigo-600" />
+            <h2 className="text-2xl font-bold text-gray-900">Professional Support (India)</h2>
+          </div>
+          <div className="grid sm:grid-cols-2 gap-6">
+            {professionalServices.map((svc, idx) => (
+              <div key={idx} className="bg-white rounded-2xl p-7 shadow-soft hover:shadow-softLg transition-all flex flex-col">
+                <div className="flex items-start justify-between mb-3">
+                  <div
+                    className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold text-white bg-gradient-to-r ${svc.color}`}
+                  >
+                    {svc.badge}
+                  </div>
+                </div>
+                <h3 className="font-bold text-gray-900 text-lg mb-2">{svc.title}</h3>
+                <p className="text-gray-600 text-sm mb-4 flex-1">{svc.description}</p>
+                <ul className="space-y-1.5 mb-5">
+                  {svc.features.map((f, fi) => (
+                    <li key={fi} className="text-sm text-gray-700 flex items-center gap-2">
+                      <span className="w-4 h-4 rounded-full bg-mint-100 text-mint-600 flex items-center justify-center text-xs font-bold flex-shrink-0">✓</span>
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <a
+                  href={svc.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`w-full block text-center px-5 py-2.5 rounded-xl text-white font-semibold bg-gradient-to-r ${svc.color} hover:shadow-softLg transition-all text-sm`}
+                >
+                  {svc.linkLabel}
+                </a>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* ── Directory Link ── */}
+        <section className="mb-10 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-2xl p-7 border border-indigo-200 flex flex-col sm:flex-row items-center gap-5">
+          <Globe className="w-10 h-10 text-indigo-500 flex-shrink-0" />
+          <div className="flex-1 text-center sm:text-left">
+            <h3 className="font-bold text-gray-900 mb-1">Need More Local Help?</h3>
+            <p className="text-gray-600 text-sm">
+              The Mind Clan is India's most inclusive therapist and support-group directory — filter
+              by city, language, specialisation, and budget.
+            </p>
+          </div>
+          <a
+            href="https://themindclan.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex-shrink-0 px-5 py-2.5 rounded-xl bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors text-sm"
+          >
+            Browse Directory
+          </a>
+        </section>
+
+        {/* ── Footer CTA ── */}
         <section className="bg-gradient-to-r from-mint-100 to-sky-100 rounded-2xl p-8 border border-mint-200 text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Your Mental Health Matters</h2>
-          <p className="text-gray-800 max-w-2xl mx-auto mb-6">
-            Seeking help is a sign of strength, not weakness. Whether you need immediate support, educational resources, or professional care, we're
-            here to help you every step of the way.
-          </p>
-          <p className="text-gray-800 font-semibold mb-6">
-            If you're ready to take the next step, reach out to a professional today.
+          <h2 className="text-2xl font-bold text-gray-900 mb-3">Your Mental Health Matters 🇮🇳</h2>
+          <p className="text-gray-700 max-w-2xl mx-auto mb-6 text-sm">
+            Seeking help is a sign of strength, not weakness. Whether you need a helpline, an
+            article to understand what you're feeling, calming music, or a professional — we're
+            here to help every step of the way.
           </p>
           <Link
-            to="/dashboard"
-            className="inline-block px-8 py-3 rounded-lg bg-white text-mint-600 font-semibold hover:bg-gray-100 transition-colors"
+            to="/screening"
+            className="inline-block px-8 py-3 rounded-xl bg-gradient-to-r from-mint-500 to-sky-500 text-white font-semibold hover:shadow-softLg transition-all"
           >
-            Get Started Today
+            Take a Screening Now
           </Link>
         </section>
+
       </div>
     </div>
   );

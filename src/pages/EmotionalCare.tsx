@@ -1,14 +1,17 @@
 import { CheckCircle, Heart, Leaf, MessageCircle, Play, RefreshCw, Wind } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 export default function EmotionalCare() {
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
   const [activeActivity, setActiveActivity] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState(0);
+  // Ref to current step so the timer interval can always read the latest value
+  const stepRef = useRef(0);
   const [activityStarted, setActivityStarted] = useState(false);
   const [activityCompleted, setActivityCompleted] = useState(false);
   const [timeLeft, setTimeLeft] = useState(0);
+  const activeActivityRef = useRef<string | null>(null);
 
   const moods = [
     { 
@@ -127,16 +130,24 @@ export default function EmotionalCare() {
     },
   ];
 
-  // Timer effect
+  // Keep refs in sync with state for use inside the timer interval
+  useEffect(() => { stepRef.current = currentStep; }, [currentStep]);
+  useEffect(() => { activeActivityRef.current = activeActivity; }, [activeActivity]);
+
+  // Timer effect - reads from refs to avoid stale closures
   useEffect(() => {
     if (!activityStarted || activityCompleted) return;
 
     const timer = setInterval(() => {
       setTimeLeft(prev => {
         if (prev <= 1) {
-          if (currentStep < getActiveActivity()!.steps.length - 1) {
-            setCurrentStep(prev => prev + 1);
-            return getActiveActivity()!.steps[Math.min(currentStep + 1, getActiveActivity()!.steps.length - 1)].duration;
+          const act = resetActivities.find(a => a.id === activeActivityRef.current);
+          if (!act) return 0;
+          const step = stepRef.current;
+          if (step < act.steps.length - 1) {
+            const nextStep = step + 1;
+            setCurrentStep(nextStep);
+            return act.steps[nextStep].duration;
           } else {
             setActivityCompleted(true);
             clearInterval(timer);
@@ -148,7 +159,7 @@ export default function EmotionalCare() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [activityStarted, currentStep, activityCompleted]);
+  }, [activityStarted, activityCompleted]);
 
   const getActiveActivity = () => {
     return resetActivities.find(a => a.id === activeActivity);
@@ -159,6 +170,7 @@ export default function EmotionalCare() {
     if (activity) {
       setActivityStarted(true);
       setCurrentStep(0);
+      stepRef.current = 0;
       setTimeLeft(activity.steps[0].duration);
     }
   };
@@ -173,9 +185,11 @@ export default function EmotionalCare() {
 
   const finishActivity = () => {
     setActiveActivity(null);
+    activeActivityRef.current = null;
     setActivityStarted(false);
     setActivityCompleted(false);
     setCurrentStep(0);
+    stepRef.current = 0;
     setTimeLeft(0);
   };
 

@@ -7,40 +7,62 @@ export default function Home() {
 
   return (
     <div className="min-h-screen">
-      <section className="relative overflow-hidden pt-20 pb-32 px-4 sm:px-6 lg:px-8">
-        <div className="absolute inset-0 bg-gradient-to-b from-mint-50 via-sky-50 to-transparent"></div>
+      <section className="relative overflow-hidden pt-24 pb-36 px-4 sm:px-6 lg:px-8">
+        {/* Vibrant gradient background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-mint-100 via-sky-100 to-lavender-100" />
+        {/* Decorative blobs */}
+        <div className="absolute top-0 right-0 w-96 h-96 bg-mint-200 rounded-full mix-blend-multiply filter blur-3xl opacity-50 animate-pulse" />
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-sky-200 rounded-full mix-blend-multiply filter blur-3xl opacity-50 animate-pulse" style={{ animationDelay: '1.5s' }} />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-lavender-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse" style={{ animationDelay: '0.7s' }} />
+
         <div className="relative max-w-7xl mx-auto text-center">
           {userProfile?.name && (
-            <p className="text-lg text-mint-600 font-semibold mb-4 animate-slideUp">Welcome back, {userProfile.name}! 👋</p>
+            <div className="inline-flex items-center gap-2 mb-4 px-4 py-2 bg-white/70 backdrop-blur-sm rounded-full border border-mint-200 shadow-soft animate-slideUp">
+              <span className="text-lg">👋</span>
+              <p className="text-mint-700 font-semibold text-sm">Welcome back, {userProfile.name}!</p>
+            </div>
           )}
-          <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6 animate-slideUp">
-            Your mental wellbeing <span className="bg-gradient-to-r from-mint-600 to-sky-600 bg-clip-text text-transparent">matters.</span>
+          <h1 className="text-5xl md:text-7xl font-bold text-gray-900 mb-6 animate-slideUp leading-tight">
+            Your mental wellbeing{' '}
+            <span className="bg-gradient-to-r from-mint-600 to-sky-600 bg-clip-text text-transparent">
+              matters.
+            </span>
           </h1>
-          <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto animate-slideUp">
+          <p className="text-xl text-gray-600 mb-10 max-w-2xl mx-auto animate-slideUp leading-relaxed">
             A safe space to check in with yourself, understand your emotions, and take gentle steps forward. You're never alone.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center animate-slideUp">
             <Link
               to="/screening"
-              className="px-8 py-3 rounded-lg bg-gradient-to-r from-mint-500 to-mint-600 text-white font-semibold hover:shadow-softLg transition-all duration-200 hover:scale-105"
+              className="px-8 py-4 rounded-xl bg-gradient-to-r from-mint-500 to-sky-500 text-white font-semibold hover:shadow-softLg transition-all duration-200 hover:scale-105 text-lg"
             >
-              Take Screening
+              Take Mental Screening
             </Link>
             <Link
               to="/emotional-care"
-              className="px-8 py-3 rounded-lg bg-sky-100 text-sky-700 font-semibold hover:bg-sky-200 transition-all duration-200"
+              className="px-8 py-4 rounded-xl bg-white/80 backdrop-blur-sm text-sky-700 font-semibold border-2 border-sky-200 hover:bg-white hover:shadow-soft transition-all duration-200 text-lg"
             >
               Start Emotional Check-In
             </Link>
-            <Link
-              to="/dashboard"
-              className="px-8 py-3 rounded-lg bg-mint-100 text-mint-700 font-semibold hover:bg-mint-200 transition-all duration-200"
-            >
-              View Dashboard
-            </Link>
+          </div>
+          {/* Stats pill */}
+          <div className="mt-12 flex flex-wrap items-center justify-center gap-6 text-sm text-gray-500 animate-slideUp">
+            <div className="flex items-center gap-2 bg-white/70 backdrop-blur-sm px-4 py-2 rounded-full border border-mint-100 shadow-soft">
+              <span className="text-xl">🌿</span>
+              <span className="font-medium">Free & Secure</span>
+            </div>
+            <div className="flex items-center gap-2 bg-white/70 backdrop-blur-sm px-4 py-2 rounded-full border border-sky-100 shadow-soft">
+              <span className="text-xl">🔒</span>
+              <span className="font-medium">100% Private</span>
+            </div>
+            <div className="flex items-center gap-2 bg-white/70 backdrop-blur-sm px-4 py-2 rounded-full border border-lavender-100 shadow-soft">
+              <span className="text-xl">💪</span>
+              <span className="font-medium">Evidence-Based</span>
+            </div>
           </div>
         </div>
       </section>
+
 
       <section className="py-16 px-4 sm:px-6 lg:px-8 bg-white/40">
         <div className="max-w-7xl mx-auto">
