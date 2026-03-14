@@ -1,14 +1,17 @@
-import { Heart, Menu, X } from 'lucide-react';
+import { Heart, Menu, User, X } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { ADMIN_UIDS } from '../../utils/constants';
 import { Button } from '../ui/Button';
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, userProfile, logout } = useAuth();
+
+  const isAdmin = user ? ADMIN_UIDS.includes(user.uid) : false;
 
   const navItems = user
     ? [
@@ -19,7 +22,8 @@ export default function Navbar() {
         { path: '/community', label: 'Community' },
         { path: '/dashboard', label: 'Dashboard' },
         { path: '/resources', label: 'Resources' },
-        { path: '/admin', label: 'Admin' },
+        // Only show Admin link to admins
+        ...(isAdmin ? [{ path: '/admin', label: 'Admin' }] : []),
       ]
     : [{ path: '/login', label: 'Login' }];
 
@@ -65,6 +69,17 @@ export default function Navbar() {
 
           {user && (
             <div className="hidden md:flex items-center gap-2">
+              {/* User name display */}
+              {userProfile?.name && (
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded-lg">
+                  <div className="w-6 h-6 rounded-full bg-gradient-to-br from-mint-400 to-sky-400 flex items-center justify-center flex-shrink-0">
+                    <User className="w-3 h-3 text-white" />
+                  </div>
+                  <span className="text-sm font-medium text-gray-700 max-w-[120px] truncate">
+                    {userProfile.name}
+                  </span>
+                </div>
+              )}
               <Link to="/resources" onClick={() => setIsOpen(false)}>
                 <Button variant="secondary" className="text-sm">Get Help</Button>
               </Link>
@@ -100,6 +115,14 @@ export default function Navbar() {
               {navItems.map(renderLink)}
               {user && (
                 <>
+                  {userProfile?.name && (
+                    <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg">
+                      <div className="w-6 h-6 rounded-full bg-gradient-to-br from-mint-400 to-sky-400 flex items-center justify-center">
+                        <User className="w-3 h-3 text-white" />
+                      </div>
+                      <span className="text-sm font-medium text-gray-700">{userProfile.name}</span>
+                    </div>
+                  )}
                   <Link to="/resources" onClick={() => setIsOpen(false)}>
                     <Button variant="secondary" className="mt-2 w-full">Get Help</Button>
                   </Link>

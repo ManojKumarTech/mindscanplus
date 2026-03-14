@@ -1,8 +1,10 @@
 import { collection, getDocs } from 'firebase/firestore';
 import { Calendar, Eye, RefreshCw, Search, TrendingUp, Users, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { db } from '../backend/firebase';
 import { useAuth } from '../context/AuthContext';
+import { ADMIN_UIDS } from '../utils/constants';
 import {
   DashboardMetrics,
   fetchUserScreeningResults,
@@ -22,14 +24,6 @@ interface UserRecord {
   createdAt?: any;
   lastActive?: any;
 }
-
-// Admin UIDs - add more UIDs here to grant admin access
-const ADMIN_UIDS = [
-  'dNDk5w5QYwOhiEufVHuOsEp6T472',
-  'vOdYfb2pbcQjED7APCgsieoLHiE2',
-  'CuoEClKLcWfWgdxfPV5HHvsyfmv1',
-  'GwtOxqRTf0aoD5FOOHvY3R55hCa2',
-];
 
 interface UserStats {
   screeningCount: number;
@@ -68,7 +62,7 @@ export default function Admin() {
     }
   };
 
-useEffect(() => {
+  useEffect(() => {
     if (!user) return;
     if (!ADMIN_UIDS.includes(user.uid)) {
       setLoading(false);
@@ -127,9 +121,8 @@ useEffect(() => {
       return lastActive > weekAgo;
     }).length;
 
-    // Calculate total screenings (would need to fetch all screening results)
-    // For now, we'll show a placeholder
-    const totalScreenings = 0; // This would require counting all subcollections
+    // totalScreenings requires a Firestore collectionGroup query — show N/A
+    const totalScreenings = '–';
 
     return {
       totalUsers,
@@ -177,18 +170,34 @@ useEffect(() => {
     );
   }
 
-if (!ADMIN_UIDS.includes(user.uid)) {
+  if (!ADMIN_UIDS.includes(user.uid)) {
     return (
-      <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
-        <p className="p-8 text-center text-red-600">You are not authorized to view this page.</p>
+      <div className="min-h-screen flex items-center justify-center px-4">
+        <div className="bg-white rounded-2xl p-10 shadow-softXl border border-red-100 max-w-sm w-full text-center">
+          <div className="text-5xl mb-4">🔐</div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h2>
+          <p className="text-gray-600 mb-6">You don't have permission to view this page.</p>
+          <Link
+            to="/"
+            className="inline-block px-6 py-3 rounded-xl bg-gradient-to-r from-mint-500 to-sky-500 text-white font-semibold hover:shadow-softLg transition-all"
+          >
+            Go Home
+          </Link>
+        </div>
       </div>
     );
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
-        <p className="p-8 text-center text-gray-600">Loading...</p>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="flex items-center gap-3 text-gray-500">
+          <svg className="animate-spin w-6 h-6" viewBox="0 0 24 24" fill="none">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+          </svg>
+          <span>Loading admin data…</span>
+        </div>
       </div>
     );
   }

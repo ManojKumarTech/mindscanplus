@@ -1,6 +1,5 @@
 import { Heart } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { Button } from '../ui/Button';
 
 export default function Footer() {
   return (
@@ -22,62 +21,32 @@ export default function Footer() {
           <div>
             <h3 className="font-semibold text-gray-900 mb-3">Navigation</h3>
             <ul className="space-y-2 text-sm text-gray-600">
-              <li>
-                <Link to="/" className="hover:text-mint-600 transition-colors">
-                  Home
-                </Link>
-              </li>
-              <li>
-                <Link to="/screening" className="hover:text-mint-600 transition-colors">
-                  Screening
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/emotional-care"
-                  className="hover:text-mint-600 transition-colors"
-                >
-                  Emotional Care
-                </Link>
-              </li>
-              <li>
-                <Link to="/self-care" className="hover:text-mint-600 transition-colors">
-                  Self-Care
-                </Link>
-              </li>
+              <li><Link to="/" className="hover:text-mint-600 transition-colors">Home</Link></li>
+              <li><Link to="/screening" className="hover:text-mint-600 transition-colors">Screening</Link></li>
+              <li><Link to="/emotional-care" className="hover:text-mint-600 transition-colors">Emotional Care</Link></li>
+              <li><Link to="/self-care" className="hover:text-mint-600 transition-colors">Self-Care</Link></li>
             </ul>
           </div>
 
           <div>
             <h3 className="font-semibold text-gray-900 mb-3">Resources</h3>
             <ul className="space-y-2 text-sm text-gray-600">
-              <li>
-                <Link to="/community" className="hover:text-mint-600 transition-colors">
-                  Community
-                </Link>
-              </li>
-              <li>
-                <Link to="/dashboard" className="hover:text-mint-600 transition-colors">
-                  Dashboard
-                </Link>
-              </li>
-              <li>
-                <Link to="/resources" className="hover:text-mint-600 transition-colors">
-                  Help & Support
-                </Link>
-              </li>
+              <li><Link to="/community" className="hover:text-mint-600 transition-colors">Community</Link></li>
+              <li><Link to="/dashboard" className="hover:text-mint-600 transition-colors">Dashboard</Link></li>
+              <li><Link to="/resources" className="hover:text-mint-600 transition-colors">Help &amp; Support</Link></li>
             </ul>
           </div>
 
           <div>
             <h3 className="font-semibold text-gray-900 mb-3">In Crisis?</h3>
-            <p className="text-sm text-gray-600 mb-2">
+            <p className="text-sm text-gray-600 mb-3">
               If you're in immediate danger, please reach out for help.
             </p>
-            <Link to="/resources">
-              <Button variant="ghost" className="text-sm">
-                Crisis Resources →
-              </Button>
+            <Link
+              to="/resources"
+              className="inline-block text-sm font-semibold text-mint-600 hover:text-mint-700 transition-colors"
+            >
+              Crisis Resources →
             </Link>
           </div>
         </div>
@@ -87,7 +56,7 @@ export default function Footer() {
             Remember: You matter. Your feelings matter. And you're not alone in this journey.
           </p>
           <p className="text-center text-gray-500 text-xs mt-4">
-            © 2025 MindScan+. For crisis support, please contact a mental health professional or use the Resources page.
+            © 2026 MindScan+. For crisis support, please contact a mental health professional or use the Resources page.
           </p>
         </div>
       </div>
