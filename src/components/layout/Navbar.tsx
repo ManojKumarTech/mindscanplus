@@ -2,7 +2,7 @@ import { Heart, Menu, User, X } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { ADMIN_UIDS } from '../../utils/constants';
+import { checkIsAdmin } from '../../utils/constants';
 import { Button } from '../ui/Button';
 
 export default function Navbar() {
@@ -11,7 +11,7 @@ export default function Navbar() {
   const navigate = useNavigate();
   const { user, userProfile, logout } = useAuth();
 
-  const isAdmin = user ? ADMIN_UIDS.includes(user.uid) : false;
+  const isAdmin = checkIsAdmin(user);
 
   const navItems = user
     ? [

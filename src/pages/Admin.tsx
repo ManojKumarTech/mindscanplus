@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { db } from '../backend/firebase';
 import { useAuth } from '../context/AuthContext';
-import { ADMIN_UIDS } from '../utils/constants';
+import { checkIsAdmin } from '../utils/constants';
 import {
   DashboardMetrics,
   fetchUserScreeningResults,
@@ -64,7 +64,7 @@ export default function Admin() {
 
   useEffect(() => {
     if (!user) return;
-    if (!ADMIN_UIDS.includes(user.uid)) {
+    if (!checkIsAdmin(user)) {
       setLoading(false);
       return;
     }
@@ -170,7 +170,7 @@ export default function Admin() {
     );
   }
 
-  if (!ADMIN_UIDS.includes(user.uid)) {
+  if (!checkIsAdmin(user)) {
     return (
       <div className="min-h-screen flex items-center justify-center px-4">
         <div className="bg-white rounded-2xl p-10 shadow-softXl border border-red-100 max-w-sm w-full text-center">

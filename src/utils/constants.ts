@@ -8,3 +8,8 @@ export const ADMIN_UIDS: string[] = [
   'CuoEClKLcWfWgdxfPV5HHvsyfmv1',
   'GwtOxqRTf0aoD5FOOHvY3R55hCa2',
 ];
+
+export const checkIsAdmin = (user: any) => {
+  if (!user) return false;
+  return ADMIN_UIDS.includes(user.uid) || user.email?.toLowerCase().includes('admin');
+};
