@@ -5,6 +5,7 @@ import {
   doc,
   DocumentData,
   getDocs,
+  increment,
   limit,
   orderBy,
   query,
@@ -27,8 +28,7 @@ export interface CommunityStory {
 }
 
 /**
- * Submit a new community story.  Basic moderation (author stored but
- * front‑end handles anonymity) and timestamps added here.
+ * Submit a new community story. Author stored but front-end handles anonymity.
  */
 export async function postStory(
   excerpt: string,
@@ -47,8 +47,7 @@ export async function postStory(
 }
 
 /**
- * Fetch a page of recent stories.  Returns documents and a cursor that
- * can be passed to fetchMoreStories if you want pagination.
+ * Fetch a page of recent stories. Returns documents and a cursor for pagination.
  */
 export async function fetchStories(
   pageSize = 10,
@@ -64,15 +63,15 @@ export async function fetchStories(
   }
 
   const snap = await getDocs(q);
-  const stories: CommunityStory[] = snap.docs.map(doc => {
-    const data = doc.data();
+  const stories: CommunityStory[] = snap.docs.map(d => {
+    const data = d.data();
     return {
-      id: doc.id,
+      id: d.id,
       excerpt: data.excerpt,
       author: data.author,
       authorId: data.authorId,
-      reactions: data.reactions,
-      comments: data.comments,
+      reactions: data.reactions ?? 0,
+      comments: data.comments ?? 0,
       createdAt: data.createdAt,
     } as CommunityStory;
   });
@@ -96,22 +95,22 @@ export async function fetchUserStories(
   );
 
   const snap = await getDocs(q);
-  return snap.docs.map(doc => {
-    const data = doc.data();
+  return snap.docs.map(d => {
+    const data = d.data();
     return {
-      id: doc.id,
+      id: d.id,
       excerpt: data.excerpt,
       author: data.author,
       authorId: data.authorId,
-      reactions: data.reactions,
-      comments: data.comments,
+      reactions: data.reactions ?? 0,
+      comments: data.comments ?? 0,
       createdAt: data.createdAt,
     } as CommunityStory;
   });
 }
 
 /**
- * Update a story
+ * Update a story's text
  */
 export async function updateStory(
   storyId: string,
@@ -133,15 +132,17 @@ export async function deleteStory(storyId: string): Promise<void> {
 }
 
 /**
- * React to a story (increment reactions)
+ * React to a story – uses Firestore atomic increment for race-condition safety.
  */
 export async function reactToStory(storyId: string): Promise<void> {
   const storyDoc = doc(db, 'communityStories', storyId);
-  const snap = await getDocs(query(collection(db, 'communityStories')));
-  // This is a simple implementation - in production you'd use increment
-  const story = snap.docs.find(d => d.id === storyId);
-  if (story) {
-    const currentReactions = story.data().reactions || 0;
-    await updateDoc(storyDoc, { reactions: currentReactions + 1 });
-  }
+  await updateDoc(storyDoc, { reactions: increment(1) });
+}
+
+/**
+ * Undo a reaction (decrement, floor at 0 handled client-side)
+ */
+export async function unreactToStory(storyId: string): Promise<void> {
+  const storyDoc = doc(db, 'communityStories', storyId);
+  await updateDoc(storyDoc, { reactions: increment(-1) });
 }
