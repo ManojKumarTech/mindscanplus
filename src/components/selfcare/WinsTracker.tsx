@@ -1,4 +1,4 @@
-import { CheckCircle2, Plus, Trash2 } from 'lucide-react';
+import { CheckCircle2, Plus, Trash2, Trophy } from 'lucide-react';
 import { KeyboardEvent, useState } from 'react';
 import type { WinEntry } from '../../services/selfCareService';
 
@@ -27,29 +27,50 @@ export default function WinsTracker({ wins, loading, onAdd, onRemove }: Props) {
 
   return (
     <section className="bg-white rounded-2xl p-8 shadow-soft" aria-label="Small wins tracker">
-      <h2 className="text-2xl font-bold text-gray-900 mb-6">Small Wins Tracker</h2>
-      {loading ? (
-        <p className="text-sm text-gray-500 mb-4">Loading your wins…</p>
-      ) : null}
-      <div className="space-y-3 mb-6">
-        {wins.map(win => (
-          <div key={win.id} className="flex items-start gap-3 p-4 bg-mint-50 rounded-lg border border-mint-200 motion-safe:transition-opacity motion-safe:duration-200">
-            <CheckCircle2 className="w-5 h-5 text-mint-600 flex-shrink-0 mt-0.5 fill-mint-600" />
-            <div className="flex-1">
-              <p className="text-gray-900 font-medium">{win.text}</p>
-              <p className="text-xs text-gray-500">{win.date}</p>
-            </div>
-            <button
-              type="button"
-              onClick={() => onRemove(win)}
-              className="text-gray-400 hover:text-red-500 transition-colors"
-              aria-label="Remove win"
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-2xl font-bold text-gray-900">Small Wins Tracker</h2>
+        {wins.length > 0 && (
+          <div className="flex items-center gap-1 px-3 py-1 rounded-full bg-mint-50 border border-mint-200">
+            <Trophy className="w-3 h-3 text-mint-600" />
+            <span className="text-sm font-semibold text-mint-700">{wins.length}</span>
           </div>
-        ))}
+        )}
       </div>
+
+      {loading ? (
+        <div className="space-y-3 mb-6">
+          {[1, 2].map(i => (
+            <div key={i} className="h-14 bg-gray-100 rounded-lg animate-pulse" />
+          ))}
+        </div>
+      ) : wins.length === 0 ? (
+        <div className="text-center py-8 mb-6">
+          <div className="text-4xl mb-3">🏆</div>
+          <p className="text-gray-500 text-sm">Celebrate every win — big or small!</p>
+          <p className="text-gray-400 text-xs mt-1">Add your first win below.</p>
+        </div>
+      ) : (
+        <div className="space-y-3 mb-6">
+          {wins.map(win => (
+            <div key={win.id} className="flex items-start gap-3 p-4 bg-mint-50 rounded-lg border border-mint-200">
+              <CheckCircle2 className="w-5 h-5 text-mint-600 flex-shrink-0 mt-0.5 fill-mint-600" />
+              <div className="flex-1">
+                <p className="text-gray-900 font-medium">{win.text}</p>
+                <p className="text-xs text-gray-500 mt-0.5">{win.date}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => onRemove(win)}
+                className="text-gray-400 hover:text-red-500 transition-colors flex-shrink-0"
+                aria-label="Remove win"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
       <div className="flex gap-2">
         <input
           type="text"
